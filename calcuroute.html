@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcuroute</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* カラー設定 */
+            --col-up: #F4900C;
+            --col-down: #33CC33;
+            --col-right: #0070C0;
+            --col-left: #DD2E44;
+
+            --player-navy: #003366;
+            --player-light-navy: #D6DCE5;
+
+            --hl-up: #FFF3E0;
+            --hl-down: #E8F5E9;
+            --hl-right: #E3F2FD;
+            --hl-left: #FFEBEE;
+            
+            /* アイテム移動用ハイライト色 */
+            --hl-item: #FCE4EC;
+            --text-hl-item: #C2185B;
+
+            --text-hl-up: #E65100;
+            --text-hl-down: #1B5E20;
+            --text-hl-right: #0D47A1;
+            --text-hl-left: #B71C1C;
+
+            --item-purple: #BA68C8; 
+
+            --bg-color: #f0f2f5;
+            --board-bg: #ccc;
+            --cell-bg: #fff;
+            
+            /* レイアウト設定 */
+            --cell-size: 60px;
+            --gap: 6px;
+            --board-padding: 8px;
+            
+            --radius-cell: 6px; 
+            --radius-board: calc(var(--radius-cell) + var(--board-padding));
+
+            --num-font-size: 1.3rem;
+            
+            /* 全体の幅計算: 45+8+340+8+45 = 446px */
+            --total-width: 446px;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        h1 {
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: var(--player-navy);
+        }
+
+        /* --- 共通フォント設定 --- */
+        .info-value, .cell.goal, .player-piece, .status-icon, .history-item, .score-value, .item-label {
+            font-family: 'Arial', sans-serif;
+        }
+        .integer-val { font-size: 1.5rem; font-weight: 600; }
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            vertical-align: middle;
+            line-height: 1;
+            font-family: 'Arial', sans-serif;
+            font-size: var(--num-font-size);
+        }
+        .numerator {
+            border-bottom: 2px solid currentColor;
+            padding-bottom: 1px;
+            text-align: center;
+            width: 100%;
+            font-size: 0.75em; 
+            font-weight: 700;
+            padding-left: 4px; padding-right: 4px; box-sizing: border-box;
+        }
+        .denominator {
+            padding-top: 1px;
+            text-align: center;
+            width: 100%;
+            font-size: 0.75em;
+            font-weight: 700;
+            padding-left: 4px; padding-right: 4px; box-sizing: border-box;
+        }
+
+        /* --- 画面切り替え用 --- */
+        .screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            transition: opacity 0.3s;
+        }
+        .hidden { display: none !important; }
+
+        /* --- メニュー画面 --- */
+        #menu-screen { gap: 20px; }
+        
+        .menu-title {
+            font-size: 3rem;
+            color: var(--player-navy);
+            margin-bottom: 40px;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .menu-btn {
+            width: 280px;
+            padding: 20px;
+            font-size: 1.5rem;
+            border-radius: 50px;
+            background-color: white;
+            color: var(--player-navy);
+            border: 3px solid var(--player-navy);
+            box-shadow: none; 
+            transition: transform 0.1s, background-color 0.2s, color 0.2s;
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .menu-btn:hover {
+            background-color: var(--player-navy);
+            color: white;
+            transform: translateY(-3px);
+        }
+        .menu-btn:active { transform: translateY(0); }
+
+        /* --- ヘッダーコンテナ --- */
+        .header-container {
+            width: var(--total-width);
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            margin-bottom: 20px;
+            gap: 10px;
+            height: 90px;
+        }
+
+        /* 左側：情報パネル */
+        .info-panel {
+            flex: 1; 
+            background: white;
+            border-radius: var(--radius-board);
+            box-shadow: none;
+            display: flex;
+            justify-content: space-between; 
+            align-items: flex-start;
+            padding: 12px 15px; 
+            box-sizing: border-box;
+            gap: 0;
+        }
+
+        /* 右側：ボタンエリア */
+        .controls-side {
+            width: 90px; 
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* 共通ボタンスタイル */
+        button {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-ctrl-btn {
+            flex: 1;
+            padding: 0;
+            font-size: 0.8rem;
+            background-color: #555;
+            color: white;
+            border-radius: 12px;
+            transition: transform 0.1s, background-color 0.2s;
+            box-shadow: none;
+        }
+        .game-ctrl-btn:hover { background-color: #333; transform: translateY(-1px); }
+        .game-ctrl-btn:active { transform: translateY(0); }
+
+        .btn-reset { background-color: #7f8c8d; }
+        .btn-reset:hover { background-color: #636e72; }
+
+        .back-btn-container {
+            width: var(--total-width);
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 10px;
+        }
+        .btn-back {
+            background: transparent;
+            color: #888;
+            font-size: 1rem;
+            padding: 5px 10px;
+            border: 2px solid #ccc;
+            border-radius: 20px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .btn-back:hover {
+            background: #eee;
+            color: #555;
+        }
+
+        /* --- パネル内部デザイン --- */
+        .status-label, .moves-label, .score-label, .items-label, .history-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #888;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+            height: 1em;
+            line-height: 1;
+            text-align: center;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
+        .progress-section {
+            flex: 2;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 4px; 
+        }
+
+        .status-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .status-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            box-sizing: border-box;
+        }
+
+        .current-icon {
+            background-color: var(--player-navy);
+            color: white;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+        }
+
+        .arrow-container {
+            display: flex;
+            align-items: center;
+            height: 48px;
+            margin-top: 17px;
+        }
+
+        .arrow-icon {
+            color: #ccc;
+            font-size: 1.0rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+        }
+
+        .target-icon {
+            background-color: #CC9900;
+            color: #fff;
+            border: 2px solid #997300;
+            border-radius: var(--radius-cell);
+        }
+
+        .moves-section {
+            flex: 1.2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            border-left: 2px solid #f0f2f5;
+            padding: 0 10px;
+            height: 100%;
+        }
+        
+        .moves-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .move-dot {
+            width: 18px;
+            height: 18px;
+            background-color: var(--player-light-navy);
+            border-radius: 0;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 11px;
+            line-height: 1;
+        }
+
+        .move-dot.active {
+            background-color: var(--player-navy);
+        }
+
+        .score-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; 
+            border-left: 2px solid #f0f2f5;
+            padding: 0 5px;
+            height: 100%;
+        }
+
+        .score-value {
+            font-weight: 700; 
+            font-size: 2.2rem; 
+            color: #333333;
+            width: 100%;
+            text-align: center;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 5px; 
+            margin: 0;
+            line-height: 1;
+        }
+
+        /* --- ゲームエリア --- */
+        .game-wrapper {
+            display: grid;
+            grid-template-areas:
+                ". top ."
+                "left board right"
+                ". bottom .";
+            grid-template-columns: 45px auto 45px;
+            grid-template-rows: 45px auto 45px;
+            gap: 8px;
+        }
+
+        .bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 900; 
+            border-radius: var(--radius-board);
+            line-height: 1;
+            padding-bottom: 2px; 
+            box-sizing: border-box;
+        }
+        .bar-top    { grid-area: top;    background-color: var(--col-up); }
+        .bar-bottom { grid-area: bottom; background-color: var(--col-down); }
+        .bar-left   { grid-area: left;   background-color: var(--col-left); }
+        .bar-right  { grid-area: right;  background-color: var(--col-right); }
+
+        #game-board {
+            grid-area: board;
+            position: relative;
+            width: 340px; 
+            height: 340px;
+            background-color: var(--board-bg);
+            border-radius: var(--radius-board);
+            box-sizing: border-box;
+            overflow: hidden; 
+        }
+
+        .cell {
+            position: absolute;
+            width: var(--cell-size);
+            height: var(--cell-size);
+            background-color: var(--cell-bg);
+            border-radius: var(--radius-cell);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .cell.goal {
+            background-color: #CC9900;
+            color: #fff;
+            border: 2px solid #997300;
+            box-sizing: border-box;
+        }
+
+        .player-piece {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            margin: 6px; 
+            background-color: var(--player-navy);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0),
+                        background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+            border: 3px solid transparent; 
+            box-sizing: border-box;
+        }
+
+        .player-piece.selected {
+            transform: scale(1.1);
+            background-color: var(--player-light-navy);
+            color: var(--player-navy);
+            border-color: var(--player-navy);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .cell.highlight { cursor: pointer; }
+        .cell.hl-up { background-color: var(--hl-up); color: var(--text-hl-up); }
+        .cell.hl-down { background-color: var(--hl-down); color: var(--text-hl-down); }
+        .cell.hl-left { background-color: var(--hl-left); color: var(--text-hl-left); }
+        .cell.hl-right { background-color: var(--hl-right); color: var(--text-hl-right); }
+        
+        .cell.hl-item {
+            background-color: var(--cell-bg) !important;
+            color: #333 !important;
+            box-shadow: inset 0 0 0 4px var(--item-purple) !important;
+        }
+        
+        .cell.goal.hl-item {
+            background-color: #CC9900 !important;
+            color: #fff !important;
+            box-shadow: inset 0 0 0 4px var(--item-purple) !important;
+            border: 2px solid #997300 !important;
+        }
+
+        .preview-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .p-sym {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 900;
+            font-size: 0.9rem;
+            margin-right: 1px;
+            position: relative; top: 1px;
+        }
+        .p-num {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            position: relative; top: -1px; 
+        }
+
+        .cell-content { z-index: 1; }
+
+        /* アイテムアイコン */
+        .item-icon {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2; 
+            pointer-events: none;
+        }
+        .item-shape {
+            color: var(--item-purple);
+            font-size: 1.8rem;
+            line-height: 1;
+            position: relative;
+            top: -1px; 
+        }
+        .item-mark {
+            position: absolute;
+            color: white;
+            font-size: 1.0rem;
+            font-weight: 700;
+            font-family: 'Noto Sans JP', sans-serif;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .cell.highlight .item-mark { display: none; }
+        .cell.highlight .item-shape { opacity: 0.3; }
+
+        /* アイテム枠 */
+        #item-container {
+            margin: 15px auto 0 auto;
+            width: var(--total-width);
+            background: white;
+            border-radius: var(--radius-board);
+            border: 2px solid var(--item-purple); 
+            padding: 10px; 
+            box-sizing: border-box;
+            box-shadow: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #item-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 4px;
+            width: 100%;
+        }
+
+        .item-slot {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            margin: 0 auto;
+            border-radius: 6px;
+            border: 2px solid var(--item-purple);
+            background-color: #f9f9f9;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.1s, border-color 0.1s;
+        }
+        
+        .item-slot:active { transform: scale(0.95); }
+        .item-slot.active {
+            border: 3px solid var(--player-navy);
+            background-color: #e3f2fd;
+        }
+        
+        /* アイテムバッジスタイル */
+        .item-badge {
+            width: 74%;
+            height: 74%;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 700;
+            font-size: 1.0rem;
+            line-height: 1;
+            padding-bottom: 3px; 
+            box-sizing: border-box;
+        }
+        
+        .item-move { background-color: #7f8c8d; }
+        .item-plus { background-color: var(--col-right); }
+        .item-minus { background-color: var(--col-left); }
+        .item-mul { background-color: var(--col-up); }
+        .item-reset { background-color: #CC0099; }
+
+        /* 履歴 */
+        #history-container {
+            margin: 15px auto 0 auto;
+            width: var(--total-width);
+            background: white;
+            border-radius: var(--radius-board);
+            border: 2px solid #555;
+            padding: 10px; 
+            box-sizing: border-box;
+            box-shadow: none;
+            min-height: 60px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #history-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 4px;
+            width: 100%;
+        }
+
+        .history-item {
+            width: 38px;  
+            height: 38px; 
+            margin: 0 auto; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            line-height: 1;
+            box-sizing: border-box;
+        }
+
+        .h-sym {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 900;
+            font-size: 0.7rem; 
+            margin-right: 1px;
+            position: relative; top: 0px;
+        }
+        .h-num {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem; 
+            position: relative; top: 0px;
+        }
+
+        .hist-right {
+            background-color: var(--col-right);
+            clip-path: polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%, 15% 50%);
+            padding-left: 5px; 
+        }
+        .hist-left {
+            background-color: var(--col-left);
+            clip-path: polygon(15% 0%, 100% 0%, 85% 50%, 100% 100%, 15% 100%, 0% 50%);
+            padding-right: 5px;
+            padding-bottom: 2px;
+        }
+        .hist-up {
+            background-color: var(--col-up);
+            clip-path: polygon(50% 0%, 100% 15%, 100% 100%, 50% 85%, 0% 100%, 0% 15%);
+            padding-top: 2%; 
+            padding-bottom: 5px;
+        }
+        .hist-down {
+            background-color: var(--col-down);
+            clip-path: polygon(0% 0%, 50% 15%, 100% 0%, 100% 85%, 50% 100%, 0% 85%);
+            padding-top: 5px;
+            padding-bottom: 2%;
+        }
+
+        /* --- メッセージ帯（盤面内のみ） --- */
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            width: 100%;
+            height: auto;
+            min-height: 80px; 
+            background: rgba(0, 51, 102, 0.9);
+            padding: 10px 0; 
+            display: none;
+            z-index: 100;
+            text-align: center;
+            box-shadow: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #message.gameover {
+            background: rgba(180, 0, 0, 0.9); 
+        }
+        
+        .msg-text {
+            font-size: 3rem;
+            color: white;
+            font-weight: 400; 
+            letter-spacing: 0.1em;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .msg-subtext {
+            font-size: 1.5rem;
+            color: #ccc;
+            font-weight: 700;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .btn-retry {
+            padding: 10px 25px;
+            font-size: 1.0rem;
+            background-color: white;
+            color: var(--player-navy);
+            border-radius: 30px;
+            font-weight: 400; 
+            cursor: pointer;
+            border: none;
+            transition: transform 0.1s;
+            font-family: 'Arial', sans-serif;
+        }
+        .btn-retry:hover { transform: scale(1.05); }
+
+    </style>
+</head>
+<body>
+
+    <div id="menu-screen" class="screen">
+        <h1 class="menu-title">Calcuroute</h1>
+        <button class="menu-btn" onclick="startNormalMode()">Normal Mode</button>
+        <button class="menu-btn" onclick="startArcadeMode()">Arcade Mode</button>
+    </div>
+
+    <div id="game-screen" class="screen hidden">
+        
+        <div class="back-btn-container">
+            <button class="btn-back" onclick="showMenu()">← Back</button>
+        </div>
+
+        <div class="header-container">
+            <div class="info-panel">
+                <div class="progress-section">
+                    <div class="status-wrapper">
+                        <div class="status-label">NOW</div>
+                        <div class="status-icon current-icon" id="current-val-icon">-</div>
+                    </div>
+                    
+                    <div class="arrow-container">
+                        <div class="arrow-icon">▶▶</div>
+                    </div>
+                    
+                    <div class="status-wrapper">
+                        <div class="status-label">GOAL</div>
+                        <div class="status-icon target-icon" id="target-val-icon">-</div>
+                    </div>
+                </div>
+
+                <div class="moves-section">
+                    <div class="moves-label">MOVES</div>
+                    <div class="moves-grid" id="moves-grid">
+                        <div class="move-dot"></div>
+                        <div class="move-dot"></div>
+                        <div class="move-dot"></div>
+                        <div class="move-dot"></div>
+                        <div class="move-dot"></div>
+                        <div class="move-dot"></div>
+                        <div class="move-dot"></div>
+                        <div class="move-dot"></div>
+                    </div>
+                </div>
+
+                <div class="score-section" id="score-section">
+                    <div class="score-label">SCORE</div>
+                    <div class="score-value" id="score-val">0</div>
+                </div>
+            </div>
+
+            <div class="controls-side" id="controls-side">
+                <button class="game-ctrl-btn" onclick="initGame()">New Game</button>
+                <button class="game-ctrl-btn btn-reset" onclick="resetGame()">Reset</button>
+            </div>
+        </div>
+
+        <div class="game-wrapper">
+            <div class="bar bar-top">×</div>
+            <div class="bar bar-left">－</div>
+            
+            <div id="game-board">
+                <div id="message">
+                    <div class="msg-text" id="msg-main">CLEAR!</div>
+                    <div class="msg-subtext" id="msg-sub"></div>
+                    <button class="btn-retry hidden" id="btn-retry-game" onclick="restartArcade()">RETRY</button>
+                </div>
+            </div>
+            
+            <div class="bar bar-right">＋</div>
+            <div class="bar bar-bottom">÷</div>
+        </div>
+
+        <div id="item-container" class="hidden">
+            <div class="items-label">ITEMS</div>
+            <div id="item-grid">
+                </div>
+        </div>
+
+        <div id="history-container">
+            <div class="history-label">LOG</div>
+            <div id="history-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- 画面遷移ロジック ---
+        let currentGameMode = 'normal'; 
+
+        function showMenu() {
+            document.getElementById('menu-screen').classList.remove('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('message').style.display = 'none'; 
+        }
+
+        function startNormalMode() {
+            currentGameMode = 'normal';
+            document.getElementById('item-container').classList.add('hidden');
+            document.getElementById('controls-side').classList.remove('hidden');
+            document.getElementById('score-section').classList.add('hidden'); 
+            startGame();
+        }
+
+        function startArcadeMode() {
+            currentGameMode = 'arcade';
+            document.getElementById('item-container').classList.remove('hidden');
+            document.getElementById('controls-side').classList.add('hidden');
+            document.getElementById('score-section').classList.remove('hidden'); 
+            startGame();
+        }
+
+        function startGame() {
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            initGame();
+        }
+
+        // --- 数学ユーティリティ ---
+        function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+        function simplify(n, d) {
+            if (d === 0) return { n: 0, d: 1 };
+            if (d < 0) { n = -n; d = -d; }
+            const common = Math.abs(gcd(n, d));
+            return { n: n / common, d: d / common };
+        }
+        function createFrac(n, d = 1) { return simplify(n, d); }
+        function add(f, val) { return simplify(f.n + val * f.d, f.d); }
+        function sub(f, val) { return simplify(f.n - val * f.d, f.d); }
+        function mul(f, val) { return simplify(f.n * val, f.d); }
+        function div(f, val) { return simplify(f.n, f.d * val); }
+        function isEqual(f1, f2) { return f1.n === f2.n && f1.d === f2.d; }
+        function isInteger(f) { return f.d === 1; }
+
+        // --- ゲーム定数・変数 ---
+        const BOARD_SIZE = 5;
+        const CELL_SIZE = 60;
+        const GAP = 6;
+        const PADDING = 8;
+        
+        let player = { x: 0, y: 0, val: {n:0, d:1} };
+        let initialPlayerState = { x: 0, y: 0, val: {n:0, d:1} };
+        let goal = { x: 0, y: 0, val: {n:0, d:1} };
+        
+        let moveCount = 0; 
+        let remainingMoves = 8; 
+        let score = 0; 
+
+        // アイテム管理
+        let itemsOnBoard = []; 
+        let playerItems = [];
+        let activeItemIndex = -1;
+
+        let isGameClear = false;
+        let isGameOver = false;
+        let isPlayerSelected = false;
+
+        const boardEl = document.getElementById('game-board');
+        const currentIconEl = document.getElementById('current-val-icon');
+        const targetIconEl = document.getElementById('target-val-icon');
+        const movesGridEl = document.getElementById('moves-grid');
+        const historyGridEl = document.getElementById('history-grid');
+        const messageEl = document.getElementById('message');
+        const msgMainEl = document.getElementById('msg-main');
+        const msgSubEl = document.getElementById('msg-sub');
+        const btnRetryEl = document.getElementById('btn-retry-game');
+        const scoreValEl = document.getElementById('score-val');
+        const itemGridEl = document.getElementById('item-grid');
+        
+        let playerPieceEl = null;
+
+        function renderNumberToHTML(f) {
+            if (f.d === 1) {
+                return `<span class="integer-val">${f.n}</span>`;
+            } else {
+                return `<div class="fraction">
+                            <span class="numerator">${f.n}</span>
+                            <span class="denominator">${f.d}</span>
+                        </div>`;
+            }
+        }
+
+        function getItemIconHTML() {
+            return `<div class="item-shape">◆<span class="item-mark">?</span></div>`;
+        }
+
+        // --- アイテムデータ生成 ---
+        function generateRandomItem() {
+            const isMoveType = Math.random() < 0.5;
+            let type = '';
+
+            if (isMoveType) {
+                const moveTypes = ['M-1', 'M-1', 'M-1', 'M-2', 'M-3', 'M-4'];
+                type = moveTypes[Math.floor(Math.random() * moveTypes.length)];
+            } else {
+                const calcTypes = ['N-1', 'N-1', 'N-1', 'N-1', 'N-1', 'N-1', 'N-1', 'N-1', 'N-2'];
+                type = calcTypes[Math.floor(Math.random() * calcTypes.length)];
+            }
+            
+            let item = { type: type, label: '', sub: '', data: {} };
+
+            switch(type) {
+                case 'M-1':
+                    const axes = ['VERT', 'HORI'];
+                    const axis = axes[Math.floor(Math.random() * axes.length)];
+                    item.data.axis = axis;
+                    if(axis === 'VERT') item.label = '↕';
+                    else item.label = '↔';
+                    item.sub = 'Line';
+                    break;
+                case 'M-2':
+                    item.label = '♘';
+                    item.sub = 'Knight';
+                    break;
+                case 'M-3':
+                    item.label = '↻'; 
+                    item.sub = 'Warp';
+                    break;
+                case 'M-4':
+                    item.label = '♗';
+                    item.sub = 'Bishop';
+                    break;
+                case 'N-1':
+                    const ops = [
+                        {op:'+', v:3}, {op:'+', v:4}, {op:'+', v:5},
+                        {op:'-', v:3}, {op:'-', v:4}, {op:'-', v:5},
+                        {op:'*', v:2}, {op:'*', v:3}
+                    ];
+                    const op = ops[Math.floor(Math.random() * ops.length)];
+                    item.data.op = op;
+                    if(op.op === '*') item.label = '×' + op.v;
+                    else item.label = op.op + op.v;
+                    item.sub = 'Calc';
+                    break;
+                case 'N-2':
+                    item.label = '⇒X';
+                    item.sub = 'Reset';
+                    break;
+            }
+            return item;
+        }
+
+        function initGame() {
+            isGameClear = false;
+            isGameOver = false;
+            isPlayerSelected = false;
+            activeItemIndex = -1;
+            messageEl.style.display = 'none';
+            messageEl.classList.remove('gameover');
+            btnRetryEl.classList.add('hidden');
+            msgSubEl.textContent = '';
+            historyGridEl.innerHTML = ''; 
+            
+            itemsOnBoard = [];
+            playerItems = [];
+            
+            if (currentGameMode === 'normal') {
+                moveCount = 0;
+                score = 0;
+            } else {
+                remainingMoves = 8;
+                score = 0;
+            }
+            
+            while(!generateLevel()) {}
+            
+            if (currentGameMode === 'arcade') {
+                spawnItems();
+            }
+            
+            initialPlayerState = { 
+                x: player.x, 
+                y: player.y, 
+                val: { n: player.val.n, d: player.val.d } 
+            };
+
+            createBoardDOM();
+            updateBoardState();
+            updateInfo();
+            updateItems();
+        }
+
+        function resetGame() {
+            if (isGameClear) messageEl.style.display = 'none'; 
+            isGameClear = false;
+            isPlayerSelected = false;
+            activeItemIndex = -1;
+            messageEl.classList.remove('gameover');
+            
+            if (currentGameMode === 'normal') {
+                moveCount = 0;
+            } else {
+                remainingMoves = 8;
+                score = 0;
+                itemsOnBoard = [];
+                playerItems = [];
+            }
+            historyGridEl.innerHTML = ''; 
+
+            player = { 
+                x: initialPlayerState.x, 
+                y: initialPlayerState.y, 
+                val: { n: initialPlayerState.val.n, d: initialPlayerState.val.d } 
+            };
+            
+            if (currentGameMode === 'arcade') {
+                itemsOnBoard = [];
+                spawnItems();
+            }
+
+            updateBoardState();
+            updateInfo();
+            updateItems();
+        }
+
+        function restartArcade() {
+            initGame();
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            msgMainEl.textContent = "GAME OVER";
+            msgSubEl.textContent = `Score: ${score}`;
+            msgSubEl.style.display = 'block'; 
+            btnRetryEl.classList.remove('hidden');
+            messageEl.classList.add('gameover');
+            messageEl.style.display = 'flex';
+        }
+
+        // --- アイテムロジック ---
+        function spawnItems() {
+            let attempts = 0;
+            while (itemsOnBoard.length < 4 && attempts < 100) {
+                let rx = Math.floor(Math.random() * BOARD_SIZE);
+                let ry = Math.floor(Math.random() * BOARD_SIZE);
+                
+                let conflict = false;
+                if (rx === player.x && ry === player.y) conflict = true;
+                if (rx === goal.x && ry === goal.y) conflict = true;
+                for (let it of itemsOnBoard) {
+                    if (it.x === rx && it.y === ry) conflict = true;
+                }
+                
+                if (!conflict) {
+                    itemsOnBoard.push({ x: rx, y: ry, type: '?' });
+                }
+                attempts++;
+            }
+        }
+
+        function updateItems() {
+            itemGridEl.innerHTML = '';
+            for (let i = 0; i < 8; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'item-slot';
+                if (i === activeItemIndex) slot.classList.add('active');
+                
+                if (i < playerItems.length) {
+                    const it = playerItems[i];
+                    
+                    let bgClass = '';
+                    if (['M-1','M-2','M-3','M-4'].includes(it.type)) bgClass = 'item-move';
+                    else if (it.type === 'N-2') bgClass = 'item-reset';
+                    else if (it.type === 'N-1') {
+                        if (it.data.op.op === '+') bgClass = 'item-plus';
+                        else if (it.data.op.op === '-') bgClass = 'item-minus';
+                        else if (it.data.op.op === '*') bgClass = 'item-mul';
+                    }
+
+                    slot.innerHTML = `<div class="item-badge ${bgClass}">${it.label}</div>`;
+                    slot.onclick = (e) => {
+                        e.stopPropagation(); 
+                        handleItemClick(i);
+                    };
+                }
+                itemGridEl.appendChild(slot);
+            }
+        }
+
+        function handleItemClick(index) {
+            if (isGameClear || isGameOver) return;
+            
+            if (activeItemIndex === index) {
+                activeItemIndex = -1;
+                updateBoardState();
+                updateItems();
+                return;
+            }
+
+            isPlayerSelected = false;
+            activeItemIndex = index;
+            
+            const item = playerItems[index];
+            
+            if (['M-3', 'N-1', 'N-2'].includes(item.type)) {
+                useInstantItem(index);
+                activeItemIndex = -1;
+            }
+            
+            updateBoardState();
+            updateItems();
+        }
+
+        function useInstantItem(index) {
+            const item = playerItems[index];
+            let changed = false;
+
+            if (item.type === 'M-3') {
+                let emptySpots = [];
+                for(let y=0; y<BOARD_SIZE; y++){
+                    for(let x=0; x<BOARD_SIZE; x++){
+                        if((x!==player.x || y!==player.y) && (x!==goal.x || y!==goal.y)){
+                            emptySpots.push({x,y});
+                        }
+                    }
+                }
+                if(emptySpots.length > 0){
+                    const p = emptySpots[Math.floor(Math.random()*emptySpots.length)];
+                    player.x = p.x;
+                    player.y = p.y;
+                    changed = true;
+                }
+            } else if (item.type === 'N-1') {
+                const op = item.data.op;
+                if(op.op === '+') player.val = add(player.val, op.v);
+                else if(op.op === '-') player.val = sub(player.val, op.v);
+                else if(op.op === '*') player.val = mul(player.val, op.v);
+                changed = true;
+            } else if (item.type === 'N-2') {
+                player.val = createFrac(Math.floor(Math.random() * 11));
+                changed = true;
+            }
+
+            if (changed) {
+                if (item.type === 'M-3') score += 25;
+                else if (item.type === 'N-2') score += 10;
+                else score += 3;
+
+                playerItems.splice(index, 1);
+                updateInfo();
+                
+                if(item.type === 'M-3') checkItemPickupAt(player.x, player.y);
+                
+                if (player.x === goal.x && player.y === goal.y && isEqual(player.val, goal.val)) {
+                    checkWin();
+                }
+            }
+        }
+
+        function getValidItemMoves(item) {
+            let moves = [];
+            const cx = player.x;
+            const cy = player.y;
+
+            if (item.type === 'M-1') {
+                const directions = [];
+                if (item.data.axis === 'VERT') {
+                    directions.push({dx: 0, dy: -1}); // UP
+                    directions.push({dx: 0, dy: 1});  // DOWN
+                } else {
+                    directions.push({dx: -1, dy: 0}); // LEFT
+                    directions.push({dx: 1, dy: 0});  // RIGHT
+                }
+
+                directions.forEach(d => {
+                    for (let i = 1; i < BOARD_SIZE; i++) {
+                        let nx = cx + d.dx * i;
+                        let ny = cy + d.dy * i;
+                        if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
+                            moves.push({x: nx, y: ny});
+                        } else {
+                            break; 
+                        }
+                    }
+                });
+            } else if (item.type === 'M-2') {
+                const jumps = [
+                    {dx:1, dy:-2}, {dx:2, dy:-1}, {dx:2, dy:1}, {dx:1, dy:2},
+                    {dx:-1, dy:2}, {dx:-2, dy:1}, {dx:-2, dy:-1}, {dx:-1, dy:-2}
+                ];
+                jumps.forEach(j => {
+                    let nx = cx + j.dx;
+                    let ny = cy + j.dy;
+                    if(nx>=0 && nx<BOARD_SIZE && ny>=0 && ny<BOARD_SIZE) {
+                        moves.push({x: nx, y: ny});
+                    }
+                });
+            } else if (item.type === 'M-4') {
+                const diags = [
+                    {dx: -1, dy: -1}, {dx: 1, dy: -1},
+                    {dx: -1, dy: 1},  {dx: 1, dy: 1}
+                ];
+                
+                diags.forEach(d => {
+                    for (let i = 1; i < BOARD_SIZE; i++) {
+                        let nx = cx + d.dx * i;
+                        let ny = cy + d.dy * i;
+                        if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
+                            moves.push({x: nx, y: ny});
+                        } else {
+                            break; 
+                        }
+                    }
+                });
+            }
+            return moves;
+        }
+
+        function checkItemPickupAt(x, y) {
+            const itemIndex = itemsOnBoard.findIndex(it => it.x === x && it.y === y);
+            if (itemIndex !== -1) {
+                if (playerItems.length < 8) {
+                    playerItems.push(generateRandomItem());
+                    itemsOnBoard.splice(itemIndex, 1);
+                    updateItems();
+                }
+            }
+        }
+
+        function getValidMoves(cx, cy) {
+            let moves = [];
+            const directions = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
+            directions.forEach(dir => {
+                for (let dist = 1; dist < BOARD_SIZE; dist++) {
+                    let nx = cx + (dir.dx * dist);
+                    let ny = cy + (dir.dy * dist);
+                    if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
+                        moves.push({ dx: dir.dx * dist, dy: dir.dy * dist });
+                    }
+                }
+            });
+            return moves;
+        }
+
+        function createBoardDOM() {
+            boardEl.innerHTML = '';
+
+            for (let y = 0; y < BOARD_SIZE; y++) {
+                for (let x = 0; x < BOARD_SIZE; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = `cell-${x}-${y}`;
+                    
+                    const left = PADDING + x * (CELL_SIZE + GAP);
+                    const top = PADDING + y * (CELL_SIZE + GAP);
+                    cell.style.left = `${left}px`;
+                    cell.style.top = `${top}px`;
+
+                    if (x === goal.x && y === goal.y) {
+                        cell.classList.add('goal');
+                    }
+
+                    cell.onclick = () => handleCellClick(x, y);
+
+                    boardEl.appendChild(cell);
+                }
+            }
+
+            boardEl.appendChild(messageEl);
+
+            playerPieceEl = document.createElement('div');
+            playerPieceEl.className = 'player-piece';
+            playerPieceEl.onclick = (e) => {
+                e.stopPropagation();
+                togglePlayerSelection();
+            };
+            boardEl.appendChild(playerPieceEl);
+        }
+
+        function updateBoardState() {
+            const px = PADDING + player.x * (CELL_SIZE + GAP);
+            const py = PADDING + player.y * (CELL_SIZE + GAP);
+            const scale = isPlayerSelected ? 'scale(1.1)' : 'scale(1)';
+            playerPieceEl.style.transform = `translate(${px}px, ${py}px) ${scale}`;
+            
+            if (isPlayerSelected) playerPieceEl.classList.add('selected');
+            else playerPieceEl.classList.remove('selected');
+            
+            playerPieceEl.innerHTML = renderNumberToHTML(player.val);
+
+            let highlightMap = new Map();
+            
+            if (activeItemIndex !== -1) {
+                const item = playerItems[activeItemIndex];
+                const validMoves = getValidItemMoves(item);
+                validMoves.forEach(m => {
+                    // アイテム使用時は数値不一致でもゴールマス移動可能（単なる移動として）
+                    highlightMap.set(`${m.x},${m.y}`, { symbol: '', number: '', colorClass: 'hl-item' });
+                });
+            } else if (isPlayerSelected && !isGameClear && !isGameOver) {
+                let possibleMoves = getValidMoves(player.x, player.y);
+                possibleMoves.forEach(move => {
+                    let tx = player.x + move.dx;
+                    let ty = player.y + move.dy;
+                    let dist = Math.abs(move.dx + move.dy);
+                    let symbol = "", colorClass = "";
+                    if (move.dy < 0) { colorClass = 'hl-up';    symbol = "×"; }
+                    else if (move.dy > 0) { colorClass = 'hl-down';  symbol = "÷"; }
+                    else if (move.dx > 0) { colorClass = 'hl-right'; symbol = "＋"; }
+                    else if (move.dx < 0) { colorClass = 'hl-left';  symbol = "－"; }
+                    highlightMap.set(`${tx},${ty}`, { symbol, number: dist, colorClass });
+                });
+            }
+
+            for (let y = 0; y < BOARD_SIZE; y++) {
+                for (let x = 0; x < BOARD_SIZE; x++) {
+                    const cell = document.getElementById(`cell-${x}-${y}`);
+                    cell.className = 'cell'; 
+                    cell.innerHTML = ''; 
+
+                    if (x === goal.x && y === goal.y) {
+                        cell.classList.add('goal');
+                        const isPlayerOnGoal = (x === player.x && y === player.y);
+                        const highlightInfo = highlightMap.get(`${x},${y}`);
+                        
+                        // アイテム移動ハイライト時も数値を表示する
+                        const showGoalValue = !isPlayerOnGoal && (!highlightInfo || highlightInfo.colorClass === 'hl-item');
+
+                        if (showGoalValue) {
+                            const content = document.createElement('div');
+                            content.className = 'cell-content';
+                            content.innerHTML = renderNumberToHTML(goal.val);
+                            cell.appendChild(content);
+                        }
+                    }
+
+                    if (currentGameMode === 'arcade') {
+                        const item = itemsOnBoard.find(i => i.x === x && i.y === y);
+                        if (item) {
+                            const itemDiv = document.createElement('div');
+                            itemDiv.className = 'item-icon';
+                            itemDiv.innerHTML = getItemIconHTML();
+                            cell.appendChild(itemDiv);
+                        }
+                    }
+
+                    const highlightInfo = highlightMap.get(`${x},${y}`);
+                    if (highlightInfo) {
+                        cell.classList.add('highlight');
+                        cell.classList.add(highlightInfo.colorClass);
+
+                        const previewDiv = document.createElement('div');
+                        previewDiv.className = 'preview-overlay';
+                        
+                        if (highlightInfo.symbol) {
+                            const symSpan = document.createElement('span');
+                            symSpan.className = 'p-sym';
+                            symSpan.textContent = highlightInfo.symbol;
+                            const numSpan = document.createElement('span');
+                            numSpan.className = 'p-num';
+                            numSpan.textContent = highlightInfo.number;
+                            previewDiv.appendChild(symSpan);
+                            previewDiv.appendChild(numSpan);
+                        }
+
+                        cell.appendChild(previewDiv);
+                    }
+                }
+            }
+        }
+
+        function updateInfo() {
+            currentIconEl.innerHTML = renderNumberToHTML(player.val);
+            targetIconEl.innerHTML = renderNumberToHTML(goal.val);
+            scoreValEl.textContent = score;
+
+            movesGridEl.innerHTML = '';
+            for (let i = 0; i < 8; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'move-dot';
+                if (currentGameMode === 'normal') {
+                    if (i < moveCount) dot.classList.add('active');
+                    if (i === 7 && moveCount > 8) dot.textContent = '+';
+                } else {
+                    if (i < remainingMoves) dot.classList.add('active');
+                }
+                movesGridEl.appendChild(dot);
+            }
+        }
+
+        function addHistory(symbol, num, direction) {
+            let symChar = symbol;
+            if(symbol === "×") symChar = "×"; 
+            if(symbol === "÷") symChar = "÷";
+            if(symbol === "+") symChar = "＋"; 
+            if(symbol === "-") symChar = "－"; 
+
+            let colorClass = "";
+            if (direction === 'up') colorClass = "hist-up";
+            else if (direction === 'down') colorClass = "hist-down";
+            else if (direction === 'left') colorClass = "hist-left";
+            else if (direction === 'right') colorClass = "hist-right";
+
+            const el = document.createElement('div');
+            el.className = `history-item ${colorClass}`;
+            el.innerHTML = `<span class="h-sym">${symChar}</span><span class="h-num">${num}</span>`;
+            
+            if (currentGameMode === 'arcade') {
+                if (historyGridEl.children.length >= 8) {
+                    historyGridEl.removeChild(historyGridEl.firstElementChild);
+                }
+            }
+            historyGridEl.appendChild(el);
+        }
+
+        function togglePlayerSelection() {
+            if (isGameClear || isGameOver) return;
+            if (activeItemIndex !== -1) {
+                activeItemIndex = -1;
+                updateItems();
+            }
+            isPlayerSelected = !isPlayerSelected;
+            updateBoardState();
+        }
+
+        function handleCellClick(x, y) {
+            const cell = document.getElementById(`cell-${x}-${y}`);
+            
+            if (cell.classList.contains('highlight')) {
+                if (activeItemIndex !== -1) {
+                    const item = playerItems[activeItemIndex];
+                    if (item.type === 'M-1' || item.type === 'M-4') {
+                        const dx = x - player.x;
+                        const dy = y - player.y;
+                        const dist = Math.max(Math.abs(dx), Math.abs(dy));
+                        const sx = dx === 0 ? 0 : dx / Math.abs(dx);
+                        const sy = dy === 0 ? 0 : dy / Math.abs(dy);
+                        
+                        for(let i=1; i<=dist; i++){
+                            checkItemPickupAt(player.x + sx*i, player.y + sy*i);
+                        }
+                    } else {
+                        checkItemPickupAt(x, y);
+                    }
+
+                    player.x = x;
+                    player.y = y;
+                    
+                    score += 3; 
+
+                    playerItems.splice(activeItemIndex, 1);
+                    activeItemIndex = -1;
+                    
+                    updateBoardState();
+                    updateItems();
+                    updateInfo();
+                    
+                    if (player.x === goal.x && player.y === goal.y && isEqual(player.val, goal.val)) {
+                        checkWin();
+                    }
+                    
+                } else {
+                    executeMove(x, y);
+                }
+            } else if (isPlayerSelected) {
+                isPlayerSelected = false;
+                updateBoardState();
+            } else if (activeItemIndex !== -1) {
+                activeItemIndex = -1;
+                updateItems();
+                updateBoardState();
+            }
+        }
+
+        function executeMove(tx, ty) {
+            const ox = player.x;
+            const oy = player.y;
+            
+            let dx = tx - player.x;
+            let dy = ty - player.y;
+            let dist = Math.abs(dx + dy);
+            
+            let symbol = "";
+            let dir = "";
+
+            if (dy < 0) { 
+                player.val = mul(player.val, dist); 
+                symbol = "×"; dir = "up";
+            } else if (dy > 0) { 
+                player.val = div(player.val, dist); 
+                symbol = "÷"; dir = "down";
+            } else if (dx > 0) { 
+                player.val = add(player.val, dist); 
+                symbol = "＋"; dir = "right";
+            } else if (dx < 0) { 
+                player.val = sub(player.val, dist); 
+                symbol = "－"; dir = "left";
+            }
+
+            addHistory(symbol, dist, dir);
+
+            if (currentGameMode === 'arcade') {
+                const stepX = dx === 0 ? 0 : (dx > 0 ? 1 : -1);
+                const stepY = dy === 0 ? 0 : (dy > 0 ? 1 : -1);
+                
+                for (let i = 1; i <= dist; i++) {
+                    checkItemPickupAt(ox + stepX * i, oy + stepY * i);
+                }
+            }
+
+            player.x = tx;
+            player.y = ty;
+            
+            if (currentGameMode === 'normal') {
+                moveCount++;
+            } else {
+                remainingMoves--;
+                score += 10;
+            }
+            
+            isPlayerSelected = false;
+
+            updateBoardState();
+            updateInfo();
+            
+            if (player.x === goal.x && player.y === goal.y && isEqual(player.val, goal.val)) {
+                checkWin();
+                return; 
+            }
+
+            if (currentGameMode === 'arcade' && remainingMoves <= 0) {
+                gameOver();
+            }
+        }
+
+        function checkWin() {
+            isGameClear = true;
+            
+            if (currentGameMode === 'normal') {
+                msgMainEl.textContent = "CLEAR!";
+                msgSubEl.textContent = "";
+                msgSubEl.style.display = 'none'; 
+                btnRetryEl.classList.add('hidden');
+                messageEl.classList.remove('gameover');
+                messageEl.style.display = 'flex';
+            } else if (currentGameMode === 'arcade') {
+                score += 50;
+                updateInfo();
+                msgMainEl.textContent = "NEXT!";
+                msgSubEl.textContent = "";
+                msgSubEl.style.display = 'none'; 
+                messageEl.classList.remove('gameover');
+                messageEl.style.display = 'flex';
+                
+                remainingMoves = Math.min(8, remainingMoves + 3);
+                
+                setTimeout(() => setupArcadeNextStage(), 1000); 
+            }
+        }
+
+        function isReachableInOneMove(sx, sy, sVal, tx, ty, tVal) {
+            if (sx === tx && sy === ty) return true;
+            if (sx !== tx && sy !== ty) return false;
+
+            let dist = Math.abs((tx - sx) + (ty - sy));
+            let predictedVal = { n: sVal.n, d: sVal.d };
+
+            if (ty < sy) predictedVal = mul(predictedVal, dist);
+            else if (ty > sy) predictedVal = div(predictedVal, dist);
+            else if (tx > sx) predictedVal = add(predictedVal, dist);
+            else if (tx < sx) predictedVal = sub(predictedVal, dist);
+
+            return isEqual(predictedVal, tVal);
+        }
+
+        function generateLevel() {
+            let startX = Math.floor(Math.random() * BOARD_SIZE);
+            let startY = Math.floor(Math.random() * BOARD_SIZE);
+            let startNum = Math.floor(Math.random() * 11);
+
+            player = { x: startX, y: startY, val: createFrac(startNum) };
+            
+            let tempPos = { x: startX, y: startY };
+            let tempVal = createFrac(startNum);
+            let steps = Math.floor(Math.random() * 3) + 2;
+
+            for (let i = 0; i < steps; i++) {
+                let validMoves = getValidMoves(tempPos.x, tempPos.y);
+                if (validMoves.length === 0) return false;
+                
+                let move = validMoves[Math.floor(Math.random() * validMoves.length)];
+                let dist = Math.abs(move.dx + move.dy);
+
+                if (move.dy < 0) tempVal = mul(tempVal, dist);
+                else if (move.dy > 0) tempVal = div(tempVal, dist);
+                else if (move.dx > 0) tempVal = add(tempVal, dist);
+                else if (move.dx < 0) tempVal = sub(tempVal, dist);
+
+                tempPos.x += move.dx;
+                tempPos.y += move.dy;
+            }
+
+            if ((tempPos.x !== startX || tempPos.y !== startY) && 
+                isInteger(tempVal) && 
+                tempVal.n >= 0 && tempVal.n <= 10 &&
+                !isReachableInOneMove(startX, startY, player.val, tempPos.x, tempPos.y, tempVal)) {
+                
+                goal = { x: tempPos.x, y: tempPos.y, val: tempVal };
+                return true;
+            }
+            return false;
+        }
+
+        function generateNextGoal() {
+            let startX = player.x;
+            let startY = player.y;
+            let startVal = player.val;
+
+            let tempPos = { x: startX, y: startY };
+            let tempVal = { n: startVal.n, d: startVal.d };
+            
+            let steps = Math.floor(Math.random() * 3) + 2; 
+            let maxAttempts = 1000;
+
+            for(let attempt=0; attempt<maxAttempts; attempt++) {
+                tempPos = { x: startX, y: startY };
+                tempVal = { n: startVal.n, d: startVal.d };
+                let success = true;
+
+                for (let i = 0; i < steps; i++) {
+                    let validMoves = getValidMoves(tempPos.x, tempPos.y);
+                    if (validMoves.length === 0) { success = false; break; }
+                    
+                    let move = validMoves[Math.floor(Math.random() * validMoves.length)];
+                    let dist = Math.abs(move.dx + move.dy);
+
+                    if (move.dy < 0) tempVal = mul(tempVal, dist);
+                    else if (move.dy > 0) tempVal = div(tempVal, dist);
+                    else if (move.dx > 0) tempVal = add(tempVal, dist);
+                    else if (move.dx < 0) tempVal = sub(tempVal, dist);
+
+                    tempPos.x += move.dx;
+                    tempPos.y += move.dy;
+                }
+
+                let conflict = itemsOnBoard.some(it => it.x === tempPos.x && it.y === tempPos.y);
+
+                if (success && !conflict &&
+                   (tempPos.x !== startX || tempPos.y !== startY) && 
+                   isInteger(tempVal) && 
+                   tempVal.n >= 0 && tempVal.n <= 10 &&
+                   !isReachableInOneMove(startX, startY, startVal, tempPos.x, tempPos.y, tempVal)) {
+                    
+                    goal = { x: tempPos.x, y: tempPos.y, val: tempVal };
+                    return true;
+                }
+            }
+            
+            let attemptsFallback = 0;
+            do {
+                goal.x = Math.floor(Math.random() * BOARD_SIZE);
+                goal.y = Math.floor(Math.random() * BOARD_SIZE);
+                goal.val = createFrac(Math.floor(Math.random() * 11));
+                
+                let conflictPlayer = (goal.x === startX && goal.y === startY);
+                let conflictItem = itemsOnBoard.some(it => it.x === goal.x && it.y === goal.y);
+                
+                if (!conflictPlayer && !conflictItem) break;
+                attemptsFallback++;
+            } while(attemptsFallback < 100);
+            
+            return true;
+        }
+
+        function setupArcadeNextStage() {
+            generateNextGoal();
+            spawnItems();
+            historyGridEl.innerHTML = ''; 
+            updateBoardState();
+            updateInfo();
+            updateItems(); 
+            messageEl.style.display = 'none';
+            isGameClear = false;
+        }
+    </script>
+</body>
+</html>
