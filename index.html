@@ -53,6 +53,13 @@
             --total-width: 446px;
         }
 
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
         body {
             font-family: 'Noto Sans JP', sans-serif;
             background-color: var(--bg-color);
@@ -60,8 +67,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            margin: 0;
             color: #333;
             -webkit-tap-highlight-color: transparent;
             overflow-x: hidden; 
@@ -113,9 +118,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 100%;
             transition: opacity 0.3s;
             transform-origin: top center; 
+            /* 幅を固定して親要素の中央に配置 */
+            width: var(--total-width);
+            box-sizing: border-box;
+            flex-shrink: 0; /* 縮小されないように（transformで縮小するため） */
         }
         .hidden { display: none !important; }
 
@@ -165,13 +173,14 @@
 
         /* --- ヘッダーコンテナ --- */
         .header-container {
-            width: var(--total-width);
+            width: 100%; /* 親要素に合わせる */
             display: flex;
             justify-content: space-between;
             align-items: stretch;
             margin-bottom: 20px;
             gap: 10px;
             height: 90px;
+            box-sizing: border-box;
         }
 
         /* 左側：情報パネル */
@@ -211,7 +220,7 @@
             flex: 1;
             padding: 0;
             font-size: 0.8rem;
-            background-color: #7f8c8d; /* デフォルト灰色 */
+            background-color: #7f8c8d;
             color: white;
             border-radius: 12px;
             transition: transform 0.1s, background-color 0.2s;
@@ -225,13 +234,14 @@
 
         /* 上部ナビゲーションエリア */
         .back-btn-container {
-            width: var(--total-width);
+            width: 100%; /* 親要素に合わせる */
             height: 40px;
             display: flex;
             justify-content: center; 
             align-items: center; 
             margin-bottom: 10px;
             position: relative; 
+            box-sizing: border-box;
         }
         .btn-back {
             position: absolute; 
@@ -401,6 +411,7 @@
             grid-template-rows: 45px auto 45px;
             gap: 8px;
             box-sizing: border-box; 
+            width: 100%; /* 親要素に合わせる */
         }
 
         .bar {
@@ -434,9 +445,6 @@
 
         #game-board {
             overflow: hidden; 
-        }
-        
-        #menu-board {
         }
 
         .cell {
@@ -493,14 +501,12 @@
         .cell.hl-left { background-color: var(--hl-left); color: var(--text-hl-left); }
         .cell.hl-right { background-color: var(--hl-right); color: var(--text-hl-right); }
         
-        /* アイテム移動用のハイライト（背景そのまま、フチのみ） */
         .cell.hl-item {
             background-color: var(--cell-bg) !important;
             color: #333 !important;
             box-shadow: inset 0 0 0 4px var(--item-purple) !important;
         }
         
-        /* ゴールマスがハイライト対象の場合（金色背景維持 + 内側紫 + 外枠金色） */
         .cell.goal.hl-item {
             background-color: #CC9900 !important;
             color: #fff !important;
@@ -571,7 +577,7 @@
         /* アイテム枠 */
         #item-container {
             margin: 15px auto 0 auto;
-            width: var(--total-width);
+            width: 100%; /* 親要素に合わせる */
             background: white;
             border-radius: var(--radius-board);
             border: 2px solid var(--item-purple); 
@@ -638,7 +644,7 @@
         /* 履歴 */
         #history-container {
             margin: 15px auto 0 auto;
-            width: var(--total-width);
+            width: 100%; /* 親要素に合わせる */
             background: white;
             border-radius: var(--radius-board);
             border: 2px solid #555;
@@ -743,7 +749,7 @@
             font-family: 'Arial', sans-serif;
             line-height: 1;
             margin: 0;
-            margin-top: 6px; /* 視覚的中央補正 */
+            margin-top: 6px; 
         }
 
         .msg-subtext {
@@ -1188,7 +1194,7 @@
                     item.sub = 'Knight';
                     break;
                 case 'M-3':
-                    item.label = '↺'; 
+                    item.label = '？'; 
                     item.sub = 'Warp';
                     break;
                 case 'M-4':
@@ -1208,7 +1214,7 @@
                     item.sub = 'Calc';
                     break;
                 case 'N-2':
-                    item.label = '=X';
+                    item.label = '=N';
                     item.sub = 'Reset';
                     break;
             }
@@ -1307,7 +1313,7 @@
         }
         
         function shareToX() {
-            const text = `Calcuroute Arcade\nScore:${score}\n#Calcuroute\n\nhttps://saikoro-2357.github.io/calcuroute/`;
+            const text = `Calcuroute Arcade\nScore:${score}\n#Calcuroute\nhttps://saikoro-2357.github.io/calcuroute/`;
             const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
             window.open(shareUrl, '_blank');
         }
@@ -1417,8 +1423,8 @@
             }
 
             if (changed) {
-                if (item.type === 'M-3') score += 25;
-                else if (item.type === 'N-2') score += 10;
+                if (item.type === 'M-3') score += 20;
+                else if (item.type === 'N-2') score += 12;
                 else score += 3;
 
                 playerItems.splice(index, 1);
@@ -1961,4 +1967,3 @@
     </script>
 </body>
 </html>
-
