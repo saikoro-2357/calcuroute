@@ -64,6 +64,7 @@
             margin: 0;
             color: #333;
             -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden; 
         }
 
         h1 {
@@ -75,7 +76,7 @@
         }
 
         /* --- 共通フォント設定 --- */
-        .info-value, .cell.goal, .player-piece, .status-icon, .history-item, .score-value, .item-label {
+        .info-value, .cell.goal, .player-piece, .status-icon, .history-item, .score-value, .item-label, .mode-display {
             font-family: 'Arial', sans-serif;
         }
         .integer-val { font-size: 1.5rem; font-weight: 600; }
@@ -114,6 +115,7 @@
             align-items: center;
             width: 100%;
             transition: opacity 0.3s;
+            transform-origin: top center; 
         }
         .hidden { display: none !important; }
 
@@ -200,25 +202,28 @@
             flex: 1;
             padding: 0;
             font-size: 0.8rem;
-            background-color: #555;
+            background-color: #7f8c8d; /* デフォルト灰色 */
             color: white;
             border-radius: 12px;
             transition: transform 0.1s, background-color 0.2s;
             box-shadow: none;
         }
-        .game-ctrl-btn:hover { background-color: #333; transform: translateY(-1px); }
+        .game-ctrl-btn:hover { background-color: #636e72; transform: translateY(-1px); }
         .game-ctrl-btn:active { transform: translateY(0); }
 
-        .btn-reset { background-color: #7f8c8d; }
-        .btn-reset:hover { background-color: #636e72; }
-
+        /* 上部ナビゲーションエリア */
         .back-btn-container {
             width: var(--total-width);
+            height: 40px;
             display: flex;
-            justify-content: flex-start;
+            justify-content: center; 
+            align-items: center; 
             margin-bottom: 10px;
+            position: relative; 
         }
         .btn-back {
+            position: absolute; 
+            left: 0;
             background: transparent;
             color: #888;
             font-size: 1rem;
@@ -230,6 +235,15 @@
         .btn-back:hover {
             background: #eee;
             color: #555;
+        }
+        
+        .mode-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--player-navy);
+            font-family: sans-serif; 
+            text-transform: none; 
+            letter-spacing: 0;
         }
 
         /* --- パネル内部デザイン --- */
@@ -609,7 +623,7 @@
             padding: 10px; 
             box-sizing: border-box;
             box-shadow: none;
-            min-height: 60px; 
+            min-height: 0; 
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -620,6 +634,7 @@
             grid-template-columns: repeat(8, 1fr);
             gap: 4px;
             width: 100%;
+            min-height: 38px; 
         }
 
         .history-item {
@@ -651,7 +666,8 @@
         .hist-right {
             background-color: var(--col-right);
             clip-path: polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%, 15% 50%);
-            padding-left: 5px; 
+            padding-right: 1px;
+            padding-bottom: 2px;
         }
         .hist-left {
             background-color: var(--col-left);
@@ -668,8 +684,8 @@
         .hist-down {
             background-color: var(--col-down);
             clip-path: polygon(0% 0%, 50% 15%, 100% 0%, 100% 85%, 50% 100%, 0% 85%);
+            padding-bottom: 4px;
             padding-top: 5px;
-            padding-bottom: 2%;
         }
 
         /* --- メッセージ帯（盤面内のみ） --- */
@@ -732,7 +748,7 @@
 
     <div id="menu-screen" class="screen">
         <h1 class="menu-title">Calcuroute</h1>
-        <button class="menu-btn" onclick="startNormalMode()">Normal Mode</button>
+        <button class="menu-btn" onclick="startNormalMode()">Simple Mode</button>
         <button class="menu-btn" onclick="startArcadeMode()">Arcade Mode</button>
     </div>
 
@@ -740,6 +756,7 @@
         
         <div class="back-btn-container">
             <button class="btn-back" onclick="showMenu()">← Back</button>
+            <span id="mode-display" class="mode-display"></span>
         </div>
 
         <div class="header-container">
@@ -781,8 +798,8 @@
             </div>
 
             <div class="controls-side" id="controls-side">
-                <button class="game-ctrl-btn" onclick="initGame()">New Game</button>
-                <button class="game-ctrl-btn btn-reset" onclick="resetGame()">Reset</button>
+                <button class="game-ctrl-btn" onclick="initGame()">NEW GAME</button>
+                <button class="game-ctrl-btn btn-reset" onclick="resetGame()">RESET</button>
             </div>
         </div>
 
@@ -822,6 +839,7 @@
             document.getElementById('menu-screen').classList.remove('hidden');
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('message').style.display = 'none'; 
+            resetGameScale(); 
         }
 
         function startNormalMode() {
@@ -829,6 +847,7 @@
             document.getElementById('item-container').classList.add('hidden');
             document.getElementById('controls-side').classList.remove('hidden');
             document.getElementById('score-section').classList.add('hidden'); 
+            document.getElementById('mode-display').textContent = 'Simple';
             startGame();
         }
 
@@ -837,6 +856,7 @@
             document.getElementById('item-container').classList.remove('hidden');
             document.getElementById('controls-side').classList.add('hidden');
             document.getElementById('score-section').classList.remove('hidden'); 
+            document.getElementById('mode-display').textContent = 'Arcade';
             startGame();
         }
 
@@ -844,7 +864,32 @@
             document.getElementById('menu-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             initGame();
+            resizeGame(); 
         }
+        
+        // --- スマホ用画面サイズ調整 ---
+        function resizeGame() {
+            const gameScreen = document.getElementById('game-screen');
+            const totalWidth = 446; 
+            const windowWidth = window.innerWidth;
+            
+            if (windowWidth < totalWidth + 20) {
+                const scale = (windowWidth - 20) / totalWidth;
+                gameScreen.style.transform = `scale(${scale})`;
+            } else {
+                gameScreen.style.transform = 'none';
+            }
+        }
+        
+        function resetGameScale() {
+            document.getElementById('game-screen').style.transform = 'none';
+        }
+
+        window.addEventListener('resize', () => {
+            if (!document.getElementById('game-screen').classList.contains('hidden')) {
+                resizeGame();
+            }
+        });
 
         // --- 数学ユーティリティ ---
         function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
@@ -939,7 +984,7 @@
                     item.sub = 'Line';
                     break;
                 case 'M-2':
-                    item.label = '♘';
+                    item.label = '♞';
                     item.sub = 'Knight';
                     break;
                 case 'M-3':
@@ -947,7 +992,7 @@
                     item.sub = 'Warp';
                     break;
                 case 'M-4':
-                    item.label = '♗';
+                    item.label = '♝';
                     item.sub = 'Bishop';
                     break;
                 case 'N-1':
@@ -963,7 +1008,7 @@
                     item.sub = 'Calc';
                     break;
                 case 'N-2':
-                    item.label = '⇒X';
+                    item.label = '=X';
                     item.sub = 'Reset';
                     break;
             }
