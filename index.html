@@ -129,9 +129,18 @@
             text-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
+        .menu-btn-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
         .menu-btn {
-            width: 280px;
-            padding: 20px;
+            flex: 1;           /* 修正: 幅いっぱいに広がるように */
+            width: auto;       /* 修正: 固定幅削除 */
+            padding: 20px 0;   /* 上下パディング調整 */
             font-size: 1.5rem;
             border-radius: 50px;
             background-color: white;
@@ -391,6 +400,7 @@
             grid-template-columns: 45px auto 45px;
             grid-template-rows: 45px auto 45px;
             gap: 8px;
+            box-sizing: border-box; 
         }
 
         .bar {
@@ -411,7 +421,8 @@
         .bar-left   { grid-area: left;   background-color: var(--col-left); }
         .bar-right  { grid-area: right;  background-color: var(--col-right); }
 
-        #game-board {
+        /* 共通盤面スタイル */
+        .board-common {
             grid-area: board;
             position: relative;
             width: 340px; 
@@ -419,7 +430,15 @@
             background-color: var(--board-bg);
             border-radius: var(--radius-board);
             box-sizing: border-box;
+        }
+
+        #game-board {
+            /* board-commonで指定済み */
             overflow: hidden; 
+        }
+        
+        #menu-board {
+            /* 修正: pointer-events: noneを削除してクリック可能に */
         }
 
         .cell {
@@ -476,14 +495,12 @@
         .cell.hl-left { background-color: var(--hl-left); color: var(--text-hl-left); }
         .cell.hl-right { background-color: var(--hl-right); color: var(--text-hl-right); }
         
-        /* アイテム移動用のハイライト（背景そのまま、フチのみ） */
         .cell.hl-item {
             background-color: var(--cell-bg) !important;
             color: #333 !important;
             box-shadow: inset 0 0 0 4px var(--item-purple) !important;
         }
         
-        /* ゴールマスがハイライト対象の場合（金色背景維持 + 内側紫 + 外枠金色） */
         .cell.goal.hl-item {
             background-color: #CC9900 !important;
             color: #fff !important;
@@ -728,7 +745,7 @@
 
         .msg-subtext {
             font-size: 1.5rem;
-            color: #fff;
+            color: #ccc;
             font-weight: 700;
             font-family: 'Arial', sans-serif;
         }
@@ -769,8 +786,21 @@
 
     <div id="menu-screen" class="screen">
         <h1 class="menu-title">Calcuroute</h1>
-        <button class="menu-btn" onclick="startNormalMode()">Simple Mode</button>
-        <button class="menu-btn" onclick="startArcadeMode()">Arcade Mode</button>
+        
+        <div class="game-wrapper">
+            <div class="bar bar-top">×</div>
+            <div class="bar bar-left">－</div>
+            
+            <div id="menu-board" class="board-common"></div>
+            
+            <div class="bar bar-right">＋</div>
+            <div class="bar bar-bottom">÷</div>
+        </div>
+
+        <div class="menu-btn-container">
+            <button class="menu-btn" onclick="startNormalMode()">Simple</button>
+            <button class="menu-btn" onclick="startArcadeMode()">Arcade</button>
+        </div>
     </div>
 
     <div id="game-screen" class="screen hidden">
@@ -828,7 +858,7 @@
             <div class="bar bar-top">×</div>
             <div class="bar bar-left">－</div>
             
-            <div id="game-board">
+            <div id="game-board" class="board-common">
                 <div id="message">
                     <div class="msg-text" id="msg-main">CLEAR!</div>
                     <div class="msg-subtext" id="msg-sub"></div>
@@ -894,26 +924,37 @@
         // --- スマホ用画面サイズ調整 ---
         function resizeGame() {
             const gameScreen = document.getElementById('game-screen');
+            const menuScreen = document.getElementById('menu-screen');
             const totalWidth = 446; 
             const windowWidth = window.innerWidth;
             
-            if (windowWidth < totalWidth + 20) {
-                const scale = (windowWidth - 20) / totalWidth;
+            const scale = (windowWidth < totalWidth + 20) ? (windowWidth - 20) / totalWidth : 1;
+            
+            if (scale < 1) {
                 gameScreen.style.transform = `scale(${scale})`;
+                menuScreen.style.transform = `scale(${scale})`;
             } else {
                 gameScreen.style.transform = 'none';
+                menuScreen.style.transform = 'none';
             }
         }
         
         function resetGameScale() {
-            document.getElementById('game-screen').style.transform = 'none';
+            resizeGame(); 
         }
 
         window.addEventListener('resize', () => {
-            if (!document.getElementById('game-screen').classList.contains('hidden')) {
-                resizeGame();
-            }
+             resizeGame();
         });
+        
+        // グローバル変数追加
+        let menuPlayerPieceEl = null;
+
+        window.onload = function() {
+            initMenuBoard();
+            updateMenuBoard();
+            resizeGame();
+        };
 
         // --- 数学ユーティリティ ---
         function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
@@ -941,6 +982,10 @@
         let initialPlayerState = { x: 0, y: 0, val: {n:0, d:1} };
         let goal = { x: 0, y: 0, val: {n:0, d:1} };
         
+        // Menu variables
+        let menuPlayer = { x: 2, y: 2, val: { n: 1, d: 1 } };
+        let isMenuPlayerSelected = false;
+
         let moveCount = 0; 
         let remainingMoves = 8; 
         let score = 0; 
@@ -982,6 +1027,133 @@
 
         function getItemIconHTML() {
             return `<div class="item-shape">◆<span class="item-mark">?</span></div>`;
+        }
+        
+        // --- メニュー画面の盤面操作 ---
+        function initMenuBoard() {
+            const menuBoardEl = document.getElementById('menu-board');
+            if(!menuBoardEl) return;
+            menuBoardEl.innerHTML = '';
+
+            // セル生成
+            for (let y = 0; y < BOARD_SIZE; y++) {
+                for (let x = 0; x < BOARD_SIZE; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = `menu-cell-${x}-${y}`; 
+                    const left = PADDING + x * (CELL_SIZE + GAP);
+                    const top = PADDING + y * (CELL_SIZE + GAP);
+                    cell.style.left = `${left}px`;
+                    cell.style.top = `${top}px`;
+                    
+                    cell.onclick = () => handleMenuCellClick(x, y);
+                    
+                    menuBoardEl.appendChild(cell);
+                }
+            }
+
+            // コマ生成
+            menuPlayerPieceEl = document.createElement('div');
+            menuPlayerPieceEl.className = 'player-piece';
+            menuPlayerPieceEl.onclick = (e) => {
+                e.stopPropagation();
+                isMenuPlayerSelected = !isMenuPlayerSelected;
+                updateMenuBoard();
+            };
+            menuBoardEl.appendChild(menuPlayerPieceEl);
+        }
+
+        function handleMenuCellClick(x, y) {
+            let validMoves = [];
+            if (isMenuPlayerSelected) {
+                validMoves = getValidMoves(menuPlayer.x, menuPlayer.y);
+            }
+            
+            const move = validMoves.find(m => (menuPlayer.x + m.dx) === x && (menuPlayer.y + m.dy) === y);
+            
+            if (move) {
+                executeMenuMove(x, y);
+            } else {
+                if(isMenuPlayerSelected) {
+                    isMenuPlayerSelected = false;
+                    updateMenuBoard();
+                }
+            }
+        }
+
+        function updateMenuBoard() {
+            if (menuPlayerPieceEl) {
+                const px = PADDING + menuPlayer.x * (CELL_SIZE + GAP);
+                const py = PADDING + menuPlayer.y * (CELL_SIZE + GAP);
+                const scale = isMenuPlayerSelected ? 'scale(1.1)' : 'scale(1)';
+                menuPlayerPieceEl.style.transform = `translate(${px}px, ${py}px) ${scale}`;
+                
+                if (isMenuPlayerSelected) menuPlayerPieceEl.classList.add('selected');
+                else menuPlayerPieceEl.classList.remove('selected');
+                
+                menuPlayerPieceEl.innerHTML = renderNumberToHTML(menuPlayer.val);
+            }
+
+            let highlightMap = new Map();
+            if (isMenuPlayerSelected) {
+                let moves = getValidMoves(menuPlayer.x, menuPlayer.y);
+                moves.forEach(move => {
+                    let tx = menuPlayer.x + move.dx;
+                    let ty = menuPlayer.y + move.dy;
+                    let dist = Math.abs(move.dx + move.dy);
+                    let symbol = "", colorClass = "";
+                    if (move.dy < 0) { colorClass = 'hl-up'; symbol = "×"; }
+                    else if (move.dy > 0) { colorClass = 'hl-down'; symbol = "÷"; }
+                    else if (move.dx > 0) { colorClass = 'hl-right'; symbol = "＋"; }
+                    else if (move.dx < 0) { colorClass = 'hl-left'; symbol = "－"; }
+                    highlightMap.set(`${tx},${ty}`, { symbol, number: dist, colorClass });
+                });
+            }
+
+            for (let y = 0; y < BOARD_SIZE; y++) {
+                for (let x = 0; x < BOARD_SIZE; x++) {
+                    const cell = document.getElementById(`menu-cell-${x}-${y}`);
+                    if(!cell) continue;
+                    
+                    cell.className = 'cell';
+                    cell.innerHTML = ''; 
+
+                    const hl = highlightMap.get(`${x},${y}`);
+                    if (hl) {
+                        cell.classList.add('highlight', hl.colorClass);
+                        
+                        const previewDiv = document.createElement('div');
+                        previewDiv.className = 'preview-overlay';
+                        if (hl.symbol) {
+                            const symSpan = document.createElement('span');
+                            symSpan.className = 'p-sym';
+                            symSpan.textContent = hl.symbol;
+                            const numSpan = document.createElement('span');
+                            numSpan.className = 'p-num';
+                            numSpan.textContent = hl.number;
+                            previewDiv.appendChild(symSpan);
+                            previewDiv.appendChild(numSpan);
+                        }
+                        cell.appendChild(previewDiv);
+                    }
+                }
+            }
+        }
+
+        function executeMenuMove(tx, ty) {
+            let dx = tx - menuPlayer.x;
+            let dy = ty - menuPlayer.y;
+            let dist = Math.abs(dx + dy);
+            
+            if (dy < 0) menuPlayer.val = mul(menuPlayer.val, dist);
+            else if (dy > 0) menuPlayer.val = div(menuPlayer.val, dist);
+            else if (dx > 0) menuPlayer.val = add(menuPlayer.val, dist);
+            else if (dx < 0) menuPlayer.val = sub(menuPlayer.val, dist);
+
+            menuPlayer.x = tx;
+            menuPlayer.y = ty;
+            isMenuPlayerSelected = false;
+            updateMenuBoard();
         }
 
         // --- アイテムデータ生成 ---
@@ -1132,8 +1304,7 @@
         }
         
         function shareToX() {
-            const url = "https://saikoro-2357.github.io/calcuroute/";
-            const text = `Calcuroute Arcade\nScore:${score}\n#Calcuroute\n${url}`;
+            const text = `Calcuroute Arcade\nScore:${score}\n#Calcuroute\n\nhttps://saikoro-2357.github.io/calcuroute/`;
             const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
             window.open(shareUrl, '_blank');
         }
