@@ -113,22 +113,14 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* width: 100%; 削除: 幅は個別に指定してズレを防ぐ */
+            width: 100%;
             transition: opacity 0.3s;
             transform-origin: top center; 
         }
         .hidden { display: none !important; }
 
         /* --- メニュー画面 --- */
-        #menu-screen { 
-            gap: 20px; 
-            width: 100%; /* メニューは幅100%でOK */
-        }
-        
-        /* ゲーム画面の幅を固定することで、flex配置時のズレを防ぐ */
-        #game-screen {
-            width: var(--total-width);
-        }
+        #menu-screen { gap: 20px; }
         
         .menu-title {
             font-size: 3rem;
@@ -171,7 +163,6 @@
             margin-bottom: 20px;
             gap: 10px;
             height: 90px;
-            box-sizing: border-box; /* 追加: パディング計算を含める */
         }
 
         /* 左側：情報パネル */
@@ -232,7 +223,6 @@
             align-items: center; 
             margin-bottom: 10px;
             position: relative; 
-            box-sizing: border-box;
         }
         .btn-back {
             position: absolute; 
@@ -401,7 +391,6 @@
             grid-template-columns: 45px auto 45px;
             grid-template-rows: 45px auto 45px;
             gap: 8px;
-            box-sizing: border-box; /* 追加 */
         }
 
         .bar {
@@ -739,9 +728,16 @@
 
         .msg-subtext {
             font-size: 1.5rem;
-            color: #ccc;
+            color: #fff;
             font-weight: 700;
             font-family: 'Arial', sans-serif;
+        }
+
+        .msg-btn-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            width: 100%;
         }
 
         .btn-retry {
@@ -757,6 +753,15 @@
             font-family: 'Arial', sans-serif;
         }
         .btn-retry:hover { transform: scale(1.05); }
+
+        /* シェアボタン（黒色） */
+        #btn-share-x {
+            background-color: #000;
+            color: #fff;
+        }
+        #btn-share-x:hover {
+            background-color: #333;
+        }
 
     </style>
 </head>
@@ -827,7 +832,10 @@
                 <div id="message">
                     <div class="msg-text" id="msg-main">CLEAR!</div>
                     <div class="msg-subtext" id="msg-sub"></div>
-                    <button class="btn-retry hidden" id="btn-retry-game" onclick="restartArcade()">RETRY</button>
+                    <div class="msg-btn-container">
+                        <button class="btn-retry hidden" id="btn-retry-game" onclick="restartArcade()">RETRY</button>
+                        <button class="btn-retry hidden" id="btn-share-x" onclick="shareToX()">Post to X</button>
+                    </div>
                 </div>
             </div>
             
@@ -955,6 +963,7 @@
         const msgMainEl = document.getElementById('msg-main');
         const msgSubEl = document.getElementById('msg-sub');
         const btnRetryEl = document.getElementById('btn-retry-game');
+        const btnShareEl = document.getElementById('btn-share-x');
         const scoreValEl = document.getElementById('score-val');
         const itemGridEl = document.getElementById('item-grid');
         
@@ -1039,6 +1048,7 @@
             messageEl.style.display = 'none';
             messageEl.classList.remove('gameover');
             btnRetryEl.classList.add('hidden');
+            btnShareEl.classList.add('hidden'); 
             msgSubEl.textContent = '';
             historyGridEl.innerHTML = ''; 
             
@@ -1113,9 +1123,19 @@
             msgMainEl.textContent = "GAME OVER";
             msgSubEl.textContent = `Score: ${score}`;
             msgSubEl.style.display = 'block'; 
+            
             btnRetryEl.classList.remove('hidden');
+            btnShareEl.classList.remove('hidden'); 
+            
             messageEl.classList.add('gameover');
             messageEl.style.display = 'flex';
+        }
+        
+        function shareToX() {
+            const url = "https://saikoro-2357.github.io/calcuroute/";
+            const text = `Calcuroute Arcade\nScore:${score}\n#Calcuroute\n${url}`;
+            const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+            window.open(shareUrl, '_blank');
         }
 
         // --- アイテムロジック ---
@@ -1622,6 +1642,7 @@
                 msgSubEl.textContent = "";
                 msgSubEl.style.display = 'none'; 
                 btnRetryEl.classList.add('hidden');
+                btnShareEl.classList.add('hidden');
                 messageEl.classList.remove('gameover');
                 messageEl.style.display = 'flex';
             } else if (currentGameMode === 'arcade') {
