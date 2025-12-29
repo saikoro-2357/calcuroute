@@ -4,19 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calcuroute</title>
-    <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
-    <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="/apple-icon-76x76.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="/apple-icon-114x114.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="/apple-icon-120x120.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="/apple-icon-144x144.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">
-    <link rel="icon" type="image/png" sizes="192x192"  href="/android-icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/manifest.json">
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
@@ -756,6 +743,8 @@
             cursor: pointer;
             transition: transform 0.1s, border-color 0.1s;
             padding: 1px; /* 変更: 2px -> 1px に縮小 */
+            min-width: 0; /* 追加: コンテンツが大きくてもセルを広げない */
+            overflow: hidden; /* 追加: はみ出し防止 */
         }
         
         .item-slot:active { transform: scale(0.95); }
@@ -775,7 +764,7 @@
             color: white;
             font-family: 'Noto Sans JP', sans-serif;
             font-weight: 700;
-            font-size: 1.0rem;
+            font-size: 0.85rem; /* 変更: 1.0rem -> 0.85rem */
             line-height: 1;
             padding-bottom: 0; 
             box-sizing: border-box;
@@ -2037,6 +2026,8 @@
                 }
                 itemGridEl.appendChild(slot);
             }
+            // アイテム追加時に再描画トリガー
+            resizeGame();
         }
 
         function handleItemClick(index) {
