@@ -41,7 +41,6 @@
             --hl-right: #E3F2FD;
             --hl-left: #FFEBEE;
             
-            /* アイテム移動用ハイライト色 */
             --hl-item: #FCE4EC;
             --text-hl-item: #C2185B;
 
@@ -95,10 +94,29 @@
             font-weight: 700;
             letter-spacing: 0.05em;
             color: var(--player-navy);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 上級モード表示用の赤い菱形 (メニュー画面用) */
+        .advanced-mark {
+            color: var(--col-left); /* 赤色 */
+            font-size: 1.2rem;
+            line-height: 1;
+            margin-top: 5px;
+            height: 1.2rem; 
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+        .advanced-mark.hidden {
+            opacity: 0;
+            display: block !important; 
+            visibility: hidden;
         }
 
         /* --- 共通フォント設定 --- */
-        .info-value, .cell.goal, .player-piece, .status-icon, .history-item, .score-value, .item-label, .mode-display {
+        .info-value, .cell.goal, .player-piece, .status-icon, .history-item, .score-value, .item-label, .mode-display, .timer-value {
             font-family: 'Arial', sans-serif;
         }
         .integer-val { font-size: 1.5rem; font-weight: 600; }
@@ -137,20 +155,19 @@
             align-items: center;
             transition: opacity 0.3s;
             transform-origin: top center; 
-            /* 幅を固定して親要素の中央に配置 */
             width: var(--total-width);
             box-sizing: border-box;
-            flex-shrink: 0; /* 縮小されないように（transformで縮小するため） */
+            flex-shrink: 0; 
         }
         .hidden { display: none !important; }
 
         /* --- メニュー画面 --- */
-        #menu-screen { gap: 20px; }
+        #menu-screen { gap: 15px; }
         
         .menu-title {
             font-size: 3rem;
             color: var(--player-navy);
-            margin-bottom: 40px;
+            margin-bottom: 20px;
             text-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
@@ -159,7 +176,7 @@
             justify-content: space-between;
             width: 100%;
             gap: 15px;
-            margin-top: 10px;
+            margin-top: 5px;
         }
 
         .menu-btn {
@@ -188,14 +205,82 @@
         }
         .menu-btn:active { transform: translateY(0); }
 
+        /* --- トグルスイッチエリア --- */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            background: white;
+            padding: 10px 25px;
+            border-radius: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .toggle-label {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #7f8c8d;
+            font-family: 'Noto Sans JP', sans-serif;
+            transition: color 0.3s;
+        }
+        .toggle-label.active {
+            color: var(--player-navy);
+        }
+        .toggle-label.active-advanced {
+            color: var(--col-left);
+        }
+
+        /* スイッチ本体 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--col-left); /* 赤色 */
+        }
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
         /* --- ヘッダーコンテナ --- */
         .header-container {
-            width: 100%; /* 親要素に合わせる */
+            width: 100%; 
             display: flex;
             justify-content: space-between;
             align-items: stretch;
             margin-bottom: 20px;
-            gap: 10px;
+            gap: 8px; 
             height: 90px;
             box-sizing: border-box;
         }
@@ -209,20 +294,19 @@
             display: flex;
             justify-content: space-between; 
             align-items: flex-start;
-            padding: 12px 15px; 
+            padding: 12px 8px; 
             box-sizing: border-box;
             gap: 0;
         }
 
         /* 右側：ボタンエリア */
         .controls-side {
-            width: 90px; 
+            width: 85px; 
             display: flex;
             flex-direction: column;
             gap: 6px;
         }
 
-        /* 共通ボタンスタイル */
         button {
             font-family: 'Noto Sans JP', sans-serif;
             font-weight: 700;
@@ -249,9 +333,8 @@
         .btn-reset { background-color: #7f8c8d; }
         .btn-reset:hover { background-color: #636e72; }
 
-        /* 上部ナビゲーションエリア */
         .back-btn-container {
-            width: 100%; /* 親要素に合わせる */
+            width: 100%;
             height: 40px;
             display: flex;
             justify-content: center; 
@@ -285,9 +368,9 @@
             letter-spacing: 0;
         }
 
-        /* --- パネル内部デザイン --- */
-        .status-label, .moves-label, .score-label, .items-label, .history-label {
-            font-size: 0.7rem;
+        /* --- パネル内部 --- */
+        .status-label, .moves-label, .score-label, .timer-label, .items-label, .history-label {
+            font-size: 0.65rem;
             font-weight: 700;
             color: #888;
             letter-spacing: 0.05em;
@@ -299,12 +382,13 @@
             text-transform: uppercase;
         }
 
+        /* 4つのセクションの比率調整 */
         .progress-section {
-            flex: 2;
+            flex: 1.6;
             display: flex;
             align-items: flex-start;
             justify-content: center;
-            gap: 4px; 
+            gap: 2px; 
         }
 
         .status-wrapper {
@@ -317,9 +401,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 48px;
-            height: 48px;
-            font-size: 1.2rem;
+            width: 44px;
+            height: 44px;
+            font-size: 1.1rem;
             font-weight: 700;
             box-sizing: border-box;
         }
@@ -335,13 +419,13 @@
         .arrow-container {
             display: flex;
             align-items: center;
-            height: 48px;
-            margin-top: 17px;
+            height: 44px;
+            margin-top: 15px;
         }
 
         .arrow-icon {
             color: #ccc;
-            font-size: 1.0rem;
+            font-size: 0.8rem;
             font-weight: 900;
             letter-spacing: -2px;
         }
@@ -353,14 +437,15 @@
             border-radius: var(--radius-cell);
         }
 
+        /* MOVES表示の調整 */
         .moves-section {
-            flex: 1.2;
+            flex: 1.3;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            border-left: 2px solid #f0f2f5;
-            padding: 0 10px;
+            justify-content: flex-start; 
+            border: none; 
+            padding: 0 4px;
             height: 100%;
         }
         
@@ -368,13 +453,13 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(2, 1fr);
-            gap: 4px;
-            margin-top: 4px;
+            gap: 4px; 
+            margin-top: 0; 
         }
 
         .move-dot {
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             background-color: var(--player-light-navy);
             border-radius: 0;
             transition: background-color 0.3s;
@@ -391,20 +476,32 @@
             background-color: var(--player-navy);
         }
 
-        .score-section {
-            flex: 1;
+        /* ScoreとTimerのスタイル */
+        .score-section, .timer-section {
+            flex: 1.0;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start; 
-            border-left: 2px solid #f0f2f5;
-            padding: 0 5px;
+            border: none; 
+            padding: 0 2px;
             height: 100%;
         }
+        
+        .timer-section {
+            border-left: none;
+            border-right: none; 
+        }
+        
+        /* 比率再調整 */
+        .info-panel.has-timer .timer-section { flex: 0.9; }
+        .info-panel.has-timer .progress-section { flex: 1.4; }
+        .info-panel.has-timer .moves-section { flex: 1.3; } 
+        .info-panel.has-timer .score-section { flex: 1.0; }
 
-        .score-value {
+        .score-value, .timer-value {
             font-weight: 700; 
-            font-size: 2.2rem; 
+            font-size: 1.8rem;
             color: #333333;
             width: 100%;
             text-align: center;
@@ -415,6 +512,15 @@
             padding-bottom: 5px; 
             margin: 0;
             line-height: 1;
+        }
+        
+        .timer-value {
+            font-size: 1.6rem;
+            color: var(--player-navy);
+        }
+        
+        .timer-value.warning {
+            color: #DD2E44;
         }
 
         /* --- ゲームエリア --- */
@@ -428,7 +534,7 @@
             grid-template-rows: 45px auto 45px;
             gap: 8px;
             box-sizing: border-box; 
-            width: 100%; /* 親要素に合わせる */
+            width: 100%; 
         }
 
         .bar {
@@ -459,9 +565,31 @@
             border-radius: var(--radius-board);
             box-sizing: border-box;
         }
+        
+        /* UIレイヤー (盤面に重ねる) */
+        .ui-layer {
+            position: absolute; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: var(--radius-board);
+            pointer-events: none; /* 下のセルをクリックできるように */
+            z-index: 50;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
+        /* 盤面本体 */
         #game-board {
-            overflow: hidden; 
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 10;
         }
 
         .cell {
@@ -594,7 +722,7 @@
         /* アイテム枠 */
         #item-container {
             margin: 15px auto 0 auto;
-            width: 100%; /* 親要素に合わせる */
+            width: 100%; 
             background: white;
             border-radius: var(--radius-board);
             border: 2px solid var(--item-purple); 
@@ -627,6 +755,7 @@
             position: relative;
             cursor: pointer;
             transition: transform 0.1s, border-color 0.1s;
+            padding: 2px;
         }
         
         .item-slot:active { transform: scale(0.95); }
@@ -635,11 +764,11 @@
             background-color: #e3f2fd;
         }
         
-        /* アイテムバッジスタイル */
+        /* アイテムバッジスタイル: 枠いっぱいに広げる */
         .item-badge {
-            width: 74%;
-            height: 74%;
-            border-radius: 12px;
+            width: 100%;  
+            height: 100%; 
+            border-radius: 4px; 
             display: flex;
             align-items: center;
             justify-content: center;
@@ -648,7 +777,7 @@
             font-weight: 700;
             font-size: 1.0rem;
             line-height: 1;
-            padding-bottom: 3px; 
+            padding-bottom: 0; 
             box-sizing: border-box;
         }
         
@@ -656,12 +785,159 @@
         .item-plus { background-color: var(--col-right); }
         .item-minus { background-color: var(--col-left); }
         .item-mul { background-color: var(--col-up); }
+        .item-div  { background-color: var(--col-down); } 
         .item-reset { background-color: #CC0099; }
+
+        /* 記号サイズ調整用 */
+        .op-symbol {
+            font-size: 0.85em;
+            vertical-align: 0.05em; 
+        }
+
+        /* --- アイテムグラフィック用CSS --- */
+        .item-graphic {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* M-1: Line (50%に短縮) */
+        .graphic-line-vert {
+            width: 4px;
+            height: 50%;
+            background-color: white;
+            position: relative;
+            border-radius: 2px;
+        }
+        .graphic-line-vert::before, .graphic-line-vert::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+        }
+        .graphic-line-vert::before {
+            top: -4px;
+            border-bottom: 8px solid white;
+        }
+        .graphic-line-vert::after {
+            bottom: -4px;
+            border-top: 8px solid white;
+        }
+
+        .graphic-line-hori {
+            width: 50%;
+            height: 4px;
+            background-color: white;
+            position: relative;
+            border-radius: 2px;
+        }
+        .graphic-line-hori::before, .graphic-line-hori::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            border-top: 6px solid transparent;
+            border-bottom: 6px solid transparent;
+        }
+        .graphic-line-hori::before {
+            left: -4px;
+            border-right: 8px solid white;
+        }
+        .graphic-line-hori::after {
+            right: -4px;
+            border-left: 8px solid white;
+        }
+
+        /* M-2: Octagon (変更: 22.5度回転して頂点をずらす) */
+        .octagon-container {
+            width: 70%;
+            height: 70%;
+            position: relative;
+            margin: auto;
+            transform: rotate(22.5deg); /* 追加: 45度だと重なるため22.5度で見た目を変える */
+        }
+        .octagon-dot {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background-color: white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        /* 頂点座標計算 (半径50%の円周上) */
+        .o-pos-0 { top: 0%;    left: 50%; }   /* 上 */
+        .o-pos-1 { top: 14.7%; left: 85.3%; } /* 右上 */
+        .o-pos-2 { top: 50%;   left: 100%; }  /* 右 */
+        .o-pos-3 { top: 85.3%; left: 85.3%; } /* 右下 */
+        .o-pos-4 { top: 100%;  left: 50%; }   /* 下 */
+        .o-pos-5 { top: 85.3%; left: 14.7%; } /* 左下 */
+        .o-pos-6 { top: 50%;   left: 0%; }    /* 左 */
+        .o-pos-7 { top: 14.7%; left: 14.7%; } /* 左上 */
+        
+        .o-pos-center { 
+            top: 50%; left: 50%; 
+            width: 8px; height: 8px; /* 中心だけ少し大きく */
+        }
+
+        /* M-3: Warp (矢印削除に伴いシンプルに) */
+        .warp-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            color: white;
+            font-weight: 700;
+            font-size: 1.4rem; /* ？を大きく */
+            line-height: 1;
+        }
+        
+        /* M-4: Bishop */
+        .bishop-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .bishop-cross {
+            position: absolute;
+            width: 80%;
+            height: 4px;
+            background-color: white;
+            border-radius: 2px;
+        }
+        .bishop-cross.cw { transform: rotate(45deg); }
+        .bishop-cross.ccw { transform: rotate(-45deg); }
+        
+        .bishop-cross::before, .bishop-cross::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+        .bishop-cross::before {
+            left: -3px;
+            border-right: 7px solid white;
+        }
+        .bishop-cross::after {
+            right: -3px;
+            border-left: 7px solid white;
+        }
 
         /* 履歴 */
         #history-container {
             margin: 15px auto 0 auto;
-            width: 100%; /* 親要素に合わせる */
+            width: 100%; 
             background: white;
             border-radius: var(--radius-board);
             border: 2px solid #555;
@@ -733,29 +1009,113 @@
             padding-top: 5px;
         }
 
+        /* --- モード選択オーバーレイ (盤面内) --- */
+        #mode-select-overlay {
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none; 
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            pointer-events: auto; /* 操作可能にする */
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 100;
+        }
+        
+        .overlay-title {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .mode-btn {
+            width: 75%;
+            padding: 12px 0;
+            font-size: 1.1rem;
+            border-radius: 25px;
+            background-color: white;
+            color: var(--player-navy);
+            border: 2px solid transparent;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        .mode-btn:hover {
+            transform: scale(1.05);
+            background-color: #f0f0f0;
+        }
+        
+        /* Cancelボタン用スタイル（ボタンは削除しましたが、CSSは残しても害はありません） */
+        .mode-btn-cancel {
+            width: 40%;
+            padding: 8px 0;
+            font-size: 0.9rem;
+            background: transparent;
+            border: 1px solid #888;
+            color: #ccc;
+            margin-top: 10px;
+        }
+
+        /* --- カウントダウン表示 --- */
+        #countdown-overlay {
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 110;
+            pointer-events: auto; /* クリックブロック */
+        }
+        .countdown-text {
+            color: #FFF;
+            font-size: 8rem; /* 大きく変更 */
+            font-weight: 700; /* 太く変更 */
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            font-family: 'Arial', sans-serif; 
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center;
+            width: 100%;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
         /* --- メッセージ帯（盤面内のみ） --- */
         #message {
             position: absolute;
-            top: 50%;
-            left: 0;
-            transform: translateY(-50%);
             width: 100%;
             height: auto;
             min-height: 80px; 
             background: rgba(0, 51, 102, 0.9);
             padding: 10px 0; 
             display: none;
-            z-index: 100;
             text-align: center;
             box-shadow: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             gap: 10px;
+            pointer-events: auto;
+            z-index: 100;
         }
         
         #message.gameover {
             background: rgba(180, 0, 0, 0.9); 
+        }
+        
+        #message.timeup {
+            background: rgba(235, 90, 0, 0.9); /* 赤っぽいオレンジ */
         }
         
         .msg-text {
@@ -811,7 +1171,10 @@
 <body>
 
     <div id="menu-screen" class="screen">
-        <h1 class="menu-title">Calcuroute</h1>
+        <h1 class="menu-title">
+            Calcuroute
+            <div id="advanced-mark" class="advanced-mark hidden">◆</div>
+        </h1>
         
         <div class="game-wrapper">
             <div class="bar bar-top">×</div>
@@ -823,9 +1186,18 @@
             <div class="bar bar-bottom">÷</div>
         </div>
 
-        <div class="menu-btn-container">
+        <div id="main-menu-btns" class="menu-btn-container">
             <button class="menu-btn" onclick="startNormalMode()">Simple</button>
-            <button class="menu-btn" onclick="startArcadeMode()">Arcade</button>
+            <button class="menu-btn" onclick="prepareArcadeMode()">Arcade</button>
+        </div>
+
+        <div class="toggle-container">
+            <span class="toggle-label active" id="lbl-normal">Normal</span>
+            <label class="switch">
+                <input type="checkbox" id="advanced-switch" onchange="toggleAdvancedMode()">
+                <span class="slider"></span>
+            </label>
+            <span class="toggle-label" id="lbl-advanced">Advanced</span>
         </div>
     </div>
 
@@ -837,7 +1209,12 @@
         </div>
 
         <div class="header-container">
-            <div class="info-panel">
+            <div class="info-panel" id="info-panel">
+                <div class="timer-section hidden" id="timer-section">
+                    <div class="timer-label">TIME</div>
+                    <div class="timer-value" id="timer-val">300</div>
+                </div>
+
                 <div class="progress-section">
                     <div class="status-wrapper">
                         <div class="status-label">NOW</div>
@@ -884,13 +1261,27 @@
             <div class="bar bar-top">×</div>
             <div class="bar bar-left">－</div>
             
-            <div id="game-board" class="board-common">
-                <div id="message">
-                    <div class="msg-text" id="msg-main">CLEAR!</div>
-                    <div class="msg-subtext" id="msg-sub"></div>
-                    <div class="msg-btn-container">
-                        <button class="btn-retry hidden" id="btn-retry-game" onclick="restartArcade()">RETRY</button>
-                        <button class="btn-retry hidden" id="btn-share-x" onclick="shareToX()">Post to X</button>
+            <div class="board-common">
+                <div id="game-board"></div>
+
+                <div id="ui-layer" class="ui-layer">
+                    <div id="mode-select-overlay">
+                        <div class="overlay-title">Select Mode</div>
+                        <button class="mode-btn" onclick="startArcadeGame('endless')">Endless (∞)</button>
+                        <button class="mode-btn" onclick="startArcadeGame('timed')">Time Attack (300s)</button>
+                    </div>
+
+                    <div id="countdown-overlay">
+                        <div id="countdown-text" class="countdown-text">3</div>
+                    </div>
+
+                    <div id="message">
+                        <div class="msg-text" id="msg-main">CLEAR!</div>
+                        <div class="msg-subtext" id="msg-sub"></div>
+                        <div class="msg-btn-container">
+                            <button class="btn-retry hidden" id="btn-retry-game" onclick="restartArcade()">RETRY</button>
+                            <button class="btn-retry hidden" id="btn-share-x" onclick="shareToX()">Post to X</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -914,37 +1305,181 @@
     <script>
         // --- 画面遷移ロジック ---
         let currentGameMode = 'normal'; 
+        let arcadeType = 'endless'; // 'endless' or 'timed'
+        let timerInterval = null;
+        let countdownInterval = null; // カウントダウン用ID管理
+        let timeLeft = 300; // 300秒
+        let isCountingDown = false; // カウントダウン中は操作ブロック
+        let isAdvancedMode = false; // 上級モードフラグ
 
         function showMenu() {
+            stopTimer(); // タイマー停止
+            if(countdownInterval) clearInterval(countdownInterval); // カウントダウン停止
             document.getElementById('menu-screen').classList.remove('hidden');
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('message').style.display = 'none'; 
+            document.getElementById('mode-select-overlay').style.display = 'none'; 
+            document.getElementById('countdown-overlay').style.display = 'none';
+            isCountingDown = false;
             resetGameScale(); 
+        }
+        
+        function toggleAdvancedMode() {
+            const toggle = document.getElementById('advanced-switch');
+            isAdvancedMode = toggle.checked;
+            
+            const mark = document.getElementById('advanced-mark');
+            const lblNormal = document.getElementById('lbl-normal');
+            const lblAdvanced = document.getElementById('lbl-advanced');
+
+            if (isAdvancedMode) {
+                mark.classList.remove('hidden');
+                lblNormal.classList.remove('active');
+                lblAdvanced.classList.add('active', 'active-advanced');
+            } else {
+                mark.classList.add('hidden');
+                lblNormal.classList.add('active');
+                lblAdvanced.classList.remove('active', 'active-advanced');
+            }
+        }
+
+        // ★追加: モードタイトルを設定するヘルパー関数
+        function setModeTitle(titleText) {
+            const el = document.getElementById('mode-display');
+            let html = titleText;
+            if (isAdvancedMode) {
+                // 上級モードなら赤い◆を追加
+                html += ' <span style="color: var(--col-left); margin-left: 4px; font-size: 0.8em; vertical-align: 2px;">◆</span>';
+            }
+            el.innerHTML = html;
+        }
+        
+        function prepareArcadeMode() {
+            // Arcade画面へ遷移し、初期盤面を生成してからオーバーレイを表示
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            
+            if(countdownInterval) clearInterval(countdownInterval);
+            isCountingDown = false;
+            document.getElementById('countdown-overlay').style.display = 'none';
+
+            currentGameMode = 'arcade';
+            
+            // UI調整
+            document.getElementById('item-container').classList.remove('hidden');
+            document.getElementById('controls-side').classList.add('hidden');
+            document.getElementById('score-section').classList.remove('hidden'); 
+            
+            // 変更点: タイマーセクションを表示し、レイアウトを調整、'?'を表示
+            document.getElementById('timer-section').classList.remove('hidden');
+            document.getElementById('info-panel').classList.add('has-timer');
+            
+            timerValEl.textContent = '?';
+            timerValEl.style.fontFamily = "'Noto Sans JP', sans-serif";
+            timerValEl.classList.remove('warning');
+
+            // ★変更: ヘルパー関数を使用
+            setModeTitle('Arcade');
+            
+            initGame(false); // false = ゲーム開始せず盤面だけ描画
+
+            // オーバーレイ表示
+            document.getElementById('mode-select-overlay').style.display = 'flex';
+            resizeGame();
         }
 
         function startNormalMode() {
             currentGameMode = 'normal';
+            if(countdownInterval) clearInterval(countdownInterval);
+            isCountingDown = false;
+
             document.getElementById('item-container').classList.add('hidden');
             document.getElementById('controls-side').classList.remove('hidden');
             document.getElementById('score-section').classList.add('hidden'); 
-            document.getElementById('mode-display').textContent = 'Simple';
-            startGame();
-        }
-
-        function startArcadeMode() {
-            currentGameMode = 'arcade';
-            document.getElementById('item-container').classList.remove('hidden');
-            document.getElementById('controls-side').classList.add('hidden');
-            document.getElementById('score-section').classList.remove('hidden'); 
-            document.getElementById('mode-display').textContent = 'Arcade';
-            startGame();
-        }
-
-        function startGame() {
+            document.getElementById('timer-section').classList.add('hidden');
+            document.getElementById('info-panel').classList.remove('has-timer');
+            
+            // ★変更: ヘルパー関数を使用
+            setModeTitle('Simple');
+            
             document.getElementById('menu-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('mode-select-overlay').style.display = 'none';
+            document.getElementById('countdown-overlay').style.display = 'none';
+            
             initGame();
             resizeGame(); 
+        }
+
+        function startArcadeGame(type) {
+            arcadeType = type;
+            document.getElementById('mode-select-overlay').style.display = 'none';
+            
+            if(countdownInterval) clearInterval(countdownInterval);
+            isCountingDown = false;
+            
+            // どちらのモードでもタイマーエリアを表示
+            document.getElementById('timer-section').classList.remove('hidden');
+            document.getElementById('info-panel').classList.add('has-timer');
+
+            if (arcadeType === 'timed') {
+                // ★変更: ヘルパー関数を使用
+                setModeTitle('Arcade 300');
+                
+                // カウントダウン開始前から300を表示
+                timeLeft = 300;
+                timerValEl.style.fontFamily = "'Arial', sans-serif";
+                updateTimerDisplay(); // これで300が表示される
+                
+                runCountdown(() => {
+                    // カウントダウン終了後の処理:
+                    // 盤面は prepareArcadeMode で生成されたものを維持。
+                    // タイマーのみ開始する。
+                    startTimer(); 
+                });
+            } else {
+                // ★変更: ヘルパー関数を使用
+                setModeTitle('Arcade ∞');
+                stopTimer();
+                // ∞を表示
+                timerValEl.textContent = '∞';
+                timerValEl.style.fontFamily = "'Noto Sans JP', sans-serif";
+                timerValEl.classList.remove('warning');
+                // 盤面は維持
+            }
+        }
+        
+        function runCountdown(callback) {
+            isCountingDown = true;
+            const overlay = document.getElementById('countdown-overlay');
+            const text = document.getElementById('countdown-text');
+            overlay.style.display = 'flex';
+            
+            let count = 3;
+            text.textContent = count;
+            
+            // カウントダウン用のインターバル
+            countdownInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    text.textContent = count;
+                    // アニメーションリセット
+                    text.style.animation = 'none';
+                    text.offsetHeight; /* trigger reflow */
+                    text.style.animation = 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                } else if (count === 0) {
+                    text.textContent = "GO";
+                    text.style.animation = 'none';
+                    text.offsetHeight;
+                    text.style.animation = 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                } else {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                    overlay.style.display = 'none';
+                    isCountingDown = false;
+                    if (callback) callback();
+                }
+            }, 1000);
         }
         
         // --- スマホ用画面サイズ調整 ---
@@ -1037,6 +1572,7 @@
         const btnShareEl = document.getElementById('btn-share-x');
         const scoreValEl = document.getElementById('score-val');
         const itemGridEl = document.getElementById('item-grid');
+        const timerValEl = document.getElementById('timer-val');
         
         let playerPieceEl = null;
 
@@ -1219,14 +1755,26 @@
                     item.sub = 'Bishop';
                     break;
                 case 'N-1':
-                    const ops = [
-                        {op:'+', v:3}, {op:'+', v:4}, {op:'+', v:5},
-                        {op:'-', v:3}, {op:'-', v:4}, {op:'-', v:5},
-                        {op:'*', v:2}, {op:'*', v:3}
-                    ];
+                    let ops;
+                    if (isAdvancedMode) {
+                        ops = [
+                            {op:'+', v:2}, {op:'+', v:3}, {op:'+', v:4}, {op:'+', v:5}, {op:'+', v:6},
+                            {op:'-', v:2}, {op:'-', v:3}, {op:'-', v:4}, {op:'-', v:5}, {op:'-', v:6},
+                            {op:'*', v:2}, {op:'*', v:3},
+                            {op:'/', v:2}
+                        ];
+                    } else {
+                        ops = [
+                            {op:'+', v:3}, {op:'+', v:4}, {op:'+', v:5},
+                            {op:'-', v:3}, {op:'-', v:4}, {op:'-', v:5},
+                            {op:'*', v:2}, {op:'*', v:3}
+                        ];
+                    }
+                    
                     const op = ops[Math.floor(Math.random() * ops.length)];
                     item.data.op = op;
                     if(op.op === '*') item.label = '×' + op.v;
+                    else if(op.op === '/') item.label = '÷' + op.v;
                     else item.label = op.op + op.v;
                     item.sub = 'Calc';
                     break;
@@ -1238,13 +1786,41 @@
             return item;
         }
 
-        function initGame() {
+        // --- タイマー関数 ---
+        function startTimer() {
+            stopTimer();
+            timeLeft = 300; // 300秒
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    stopTimer();
+                    gameOver('timeup');
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function updateTimerDisplay() {
+            timerValEl.textContent = timeLeft;
+            if (timeLeft <= 30) timerValEl.classList.add('warning');
+            else timerValEl.classList.remove('warning');
+        }
+
+        function initGame(startGameFlag = true) {
             isGameClear = false;
             isGameOver = false;
             isPlayerSelected = false;
             activeItemIndex = -1;
             messageEl.style.display = 'none';
-            messageEl.classList.remove('gameover');
+            messageEl.classList.remove('gameover', 'timeup');
             btnRetryEl.classList.add('hidden');
             btnShareEl.classList.add('hidden'); 
             msgSubEl.textContent = '';
@@ -1256,9 +1832,20 @@
             if (currentGameMode === 'normal') {
                 moveCount = 0;
                 score = 0;
+                stopTimer();
             } else {
                 remainingMoves = 8;
                 score = 0;
+                if (startGameFlag && arcadeType === 'timed') {
+                    startTimer();
+                } else {
+                    stopTimer();
+                    if (currentGameMode === 'arcade' && arcadeType === 'endless') {
+                        timerValEl.textContent = '∞';
+                        timerValEl.style.fontFamily = "'Noto Sans JP', sans-serif";
+                        timerValEl.classList.remove('warning');
+                    }
+                }
             }
             
             while(!generateLevel()) {}
@@ -1284,7 +1871,7 @@
             isGameClear = false;
             isPlayerSelected = false;
             activeItemIndex = -1;
-            messageEl.classList.remove('gameover');
+            messageEl.classList.remove('gameover', 'timeup');
             
             if (currentGameMode === 'normal') {
                 moveCount = 0;
@@ -1293,6 +1880,14 @@
                 score = 0;
                 itemsOnBoard = [];
                 playerItems = [];
+                if (arcadeType === 'timed') {
+                    startTimer(); 
+                } else {
+                    stopTimer();
+                    timerValEl.textContent = '∞';
+                    timerValEl.style.fontFamily = "'Noto Sans JP', sans-serif";
+                    timerValEl.classList.remove('warning');
+                }
             }
             historyGridEl.innerHTML = ''; 
 
@@ -1313,24 +1908,37 @@
         }
 
         function restartArcade() {
-            initGame();
+            prepareArcadeMode();
         }
 
-        function gameOver() {
+        function gameOver(reason = 'nomoves') {
             isGameOver = true;
-            msgMainEl.textContent = "GAME OVER";
+            stopTimer();
+            
+            messageEl.classList.remove('gameover', 'timeup');
+
+            if (reason === 'timeup') {
+                msgMainEl.textContent = "TIME UP";
+                messageEl.classList.add('timeup');
+            } else {
+                msgMainEl.textContent = "GAME OVER";
+                messageEl.classList.add('gameover');
+            }
+            
             msgSubEl.textContent = `Score: ${score}`;
             msgSubEl.style.display = 'block'; 
             
             btnRetryEl.classList.remove('hidden');
             btnShareEl.classList.remove('hidden'); 
             
-            messageEl.classList.add('gameover');
             messageEl.style.display = 'flex';
         }
         
         function shareToX() {
-            const text = `Calcuroute Arcade\nScore:${score}\n#Calcuroute\nhttps://saikoro-2357.github.io/calcuroute/`;
+            let modeText = "Arcade ∞";
+            if (arcadeType === 'timed') modeText = "Arcade 300";
+            
+            const text = `Calcuroute ${modeText}\nScore:${score}\n#Calcuroute\nhttps://saikoro-2357.github.io/calcuroute/`;
             const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
             window.open(shareUrl, '_blank');
         }
@@ -1356,6 +1964,38 @@
             }
         }
 
+        function createMoveItemGraphic(item) {
+            if (item.type === 'M-1') {
+                // Line
+                if (item.data.axis === 'VERT') {
+                    return `<div class="item-graphic"><div class="graphic-line-vert"></div></div>`;
+                } else {
+                    return `<div class="item-graphic"><div class="graphic-line-hori"></div></div>`;
+                }
+            } else if (item.type === 'M-2') {
+                // Knight -> Octagon (8角形 + 中心)
+                // CSSで22.5度回転しているので、頂点位置もそれに追従する
+                let html = `<div class="item-graphic"><div class="octagon-container">`;
+                // 0~7: 頂点, 8: 中心
+                for(let i=0; i<9; i++) {
+                    let posClass = (i === 8) ? 'o-pos-center' : `o-pos-${i}`;
+                    html += `<div class="octagon-dot ${posClass}"></div>`;
+                }
+                html += `</div></div>`;
+                return html;
+            } else if (item.type === 'M-3') {
+                // Warp: 矢印を削除し「？」のみにする
+                return `<div class="item-graphic"><div class="warp-container">？</div></div>`;
+            } else if (item.type === 'M-4') {
+                // Bishop
+                return `<div class="item-graphic"><div class="bishop-container">
+                    <div class="bishop-cross cw"></div>
+                    <div class="bishop-cross ccw"></div>
+                </div></div>`;
+            }
+            return '';
+        }
+
         function updateItems() {
             itemGridEl.innerHTML = '';
             for (let i = 0; i < 8; i++) {
@@ -1366,16 +2006,25 @@
                 if (i < playerItems.length) {
                     const it = playerItems[i];
                     
-                    let bgClass = '';
-                    if (['M-1','M-2','M-3','M-4'].includes(it.type)) bgClass = 'item-move';
-                    else if (it.type === 'N-2') bgClass = 'item-reset';
-                    else if (it.type === 'N-1') {
-                        if (it.data.op.op === '+') bgClass = 'item-plus';
-                        else if (it.data.op.op === '-') bgClass = 'item-minus';
-                        else if (it.data.op.op === '*') bgClass = 'item-mul';
-                    }
+                    if (['M-1','M-2','M-3','M-4'].includes(it.type)) {
+                        let bgClass = 'item-move';
+                        const graphicHtml = createMoveItemGraphic(it);
+                        slot.innerHTML = `<div class="item-badge ${bgClass}">${graphicHtml}</div>`;
+                        
+                    } else {
+                        let bgClass = '';
+                        if (it.type === 'N-2') bgClass = 'item-reset';
+                        else if (it.type === 'N-1') {
+                            if (it.data.op.op === '+') bgClass = 'item-plus';
+                            else if (it.data.op.op === '-') bgClass = 'item-minus';
+                            else if (it.data.op.op === '*') bgClass = 'item-mul';
+                            else if (it.data.op.op === '/') bgClass = 'item-div';
+                        }
 
-                    slot.innerHTML = `<div class="item-badge ${bgClass}">${it.label}</div>`;
+                        let labelHtml = it.label.replace(/([×÷])/g, '<span class="op-symbol">$1</span>');
+                        slot.innerHTML = `<div class="item-badge ${bgClass}">${labelHtml}</div>`;
+                    }
+                    
                     slot.onclick = (e) => {
                         e.stopPropagation(); 
                         handleItemClick(i);
@@ -1386,8 +2035,10 @@
         }
 
         function handleItemClick(index) {
-            if (isGameClear || isGameOver) return;
+            if (isGameClear || isGameOver || isCountingDown) return;
             
+            if (document.getElementById('mode-select-overlay').style.display === 'flex') return;
+
             if (activeItemIndex === index) {
                 activeItemIndex = -1;
                 updateBoardState();
@@ -1433,9 +2084,11 @@
                 if(op.op === '+') player.val = add(player.val, op.v);
                 else if(op.op === '-') player.val = sub(player.val, op.v);
                 else if(op.op === '*') player.val = mul(player.val, op.v);
+                else if(op.op === '/') player.val = div(player.val, op.v);
                 changed = true;
             } else if (item.type === 'N-2') {
-                player.val = createFrac(Math.floor(Math.random() * 11));
+                const maxR = isAdvancedMode ? 21 : 11;
+                player.val = createFrac(Math.floor(Math.random() * maxR));
                 changed = true;
             }
 
@@ -1564,7 +2217,8 @@
                 }
             }
 
-            boardEl.appendChild(messageEl);
+            // UIレイヤーはHTMLに静的に記述してあるので、ここでは盤面（セル）だけを再生成する
+            // オーバーレイなどを消さないように注意
 
             playerPieceEl = document.createElement('div');
             playerPieceEl.className = 'player-piece';
@@ -1592,27 +2246,31 @@
                 const item = playerItems[activeItemIndex];
                 const validMoves = getValidItemMoves(item);
                 validMoves.forEach(m => {
-                    // アイテム使用時は数値不一致でもゴールマス移動可能（単なる移動として）
                     highlightMap.set(`${m.x},${m.y}`, { symbol: '', number: '', colorClass: 'hl-item' });
                 });
             } else if (isPlayerSelected && !isGameClear && !isGameOver) {
-                let possibleMoves = getValidMoves(player.x, player.y);
-                possibleMoves.forEach(move => {
-                    let tx = player.x + move.dx;
-                    let ty = player.y + move.dy;
-                    let dist = Math.abs(move.dx + move.dy);
-                    let symbol = "", colorClass = "";
-                    if (move.dy < 0) { colorClass = 'hl-up';    symbol = "×"; }
-                    else if (move.dy > 0) { colorClass = 'hl-down';  symbol = "÷"; }
-                    else if (move.dx > 0) { colorClass = 'hl-right'; symbol = "＋"; }
-                    else if (move.dx < 0) { colorClass = 'hl-left';  symbol = "－"; }
-                    highlightMap.set(`${tx},${ty}`, { symbol, number: dist, colorClass });
-                });
+                // オーバーレイ表示中はハイライトしない
+                if (document.getElementById('mode-select-overlay').style.display !== 'flex' && !isCountingDown) {
+                    let possibleMoves = getValidMoves(player.x, player.y);
+                    possibleMoves.forEach(move => {
+                        let tx = player.x + move.dx;
+                        let ty = player.y + move.dy;
+                        let dist = Math.abs(move.dx + move.dy);
+                        let symbol = "", colorClass = "";
+                        if (move.dy < 0) { colorClass = 'hl-up';    symbol = "×"; }
+                        else if (move.dy > 0) { colorClass = 'hl-down';  symbol = "÷"; }
+                        else if (move.dx > 0) { colorClass = 'hl-right'; symbol = "＋"; }
+                        else if (move.dx < 0) { colorClass = 'hl-left';  symbol = "－"; }
+                        highlightMap.set(`${tx},${ty}`, { symbol, number: dist, colorClass });
+                    });
+                }
             }
 
             for (let y = 0; y < BOARD_SIZE; y++) {
                 for (let x = 0; x < BOARD_SIZE; x++) {
                     const cell = document.getElementById(`cell-${x}-${y}`);
+                    if (!cell) continue;
+                    
                     cell.className = 'cell'; 
                     cell.innerHTML = ''; 
 
@@ -1621,7 +2279,6 @@
                         const isPlayerOnGoal = (x === player.x && y === player.y);
                         const highlightInfo = highlightMap.get(`${x},${y}`);
                         
-                        // アイテム移動ハイライト時も数値を表示する
                         const showGoalValue = !isPlayerOnGoal && (!highlightInfo || highlightInfo.colorClass === 'hl-item');
 
                         if (showGoalValue) {
@@ -1712,7 +2369,10 @@
         }
 
         function togglePlayerSelection() {
-            if (isGameClear || isGameOver) return;
+            if (isGameClear || isGameOver || isCountingDown) return;
+            // オーバーレイ表示中は操作不可
+            if (document.getElementById('mode-select-overlay').style.display === 'flex') return;
+
             if (activeItemIndex !== -1) {
                 activeItemIndex = -1;
                 updateItems();
@@ -1722,6 +2382,10 @@
         }
 
         function handleCellClick(x, y) {
+            if (isGameClear || isGameOver || isCountingDown) return;
+            // オーバーレイ表示中は操作不可
+            if (document.getElementById('mode-select-overlay').style.display === 'flex') return;
+
             const cell = document.getElementById(`cell-${x}-${y}`);
             
             if (cell.classList.contains('highlight')) {
@@ -1872,58 +2536,60 @@
             return isEqual(predictedVal, tVal);
         }
 
-        function generateLevel() {
-            let startX = Math.floor(Math.random() * BOARD_SIZE);
-            let startY = Math.floor(Math.random() * BOARD_SIZE);
-            let startNum = Math.floor(Math.random() * 11);
-
-            player = { x: startX, y: startY, val: createFrac(startNum) };
-            
-            let tempPos = { x: startX, y: startY };
-            let tempVal = createFrac(startNum);
-            let steps = Math.floor(Math.random() * 3) + 2;
-
-            for (let i = 0; i < steps; i++) {
-                let validMoves = getValidMoves(tempPos.x, tempPos.y);
-                if (validMoves.length === 0) return false;
-                
-                let move = validMoves[Math.floor(Math.random() * validMoves.length)];
-                let dist = Math.abs(move.dx + move.dy);
-
-                if (move.dy < 0) tempVal = mul(tempVal, dist);
-                else if (move.dy > 0) tempVal = div(tempVal, dist);
-                else if (move.dx > 0) tempVal = add(tempVal, dist);
-                else if (move.dx < 0) tempVal = sub(tempVal, dist);
-
-                tempPos.x += move.dx;
-                tempPos.y += move.dy;
+        // --- 盤面生成ロジック（上級モード対応） ---
+        
+        function getStepCount() {
+            if (!isAdvancedMode) {
+                // 通常モード: 2~4手 (従来通り)
+                return Math.floor(Math.random() * 3) + 2; 
+            } else {
+                // 上級モード: 2~6手 (3,4,5手が多め)
+                const p = Math.random();
+                if (p < 0.15) return 2;
+                if (p < 0.40) return 3;
+                if (p < 0.70) return 4;
+                if (p < 0.85) return 5;
+                return 6;
             }
-
-            if ((tempPos.x !== startX || tempPos.y !== startY) && 
-                isInteger(tempVal) && 
-                tempVal.n >= 0 && tempVal.n <= 10 &&
-                !isReachableInOneMove(startX, startY, player.val, tempPos.x, tempPos.y, tempVal)) {
-                
-                goal = { x: tempPos.x, y: tempPos.y, val: tempVal };
-                return true;
-            }
-            return false;
         }
 
-        function generateNextGoal() {
-            let startX = player.x;
-            let startY = player.y;
-            let startVal = player.val;
+        function isValidPath(moves) {
+            if (!isAdvancedMode) return true; 
 
-            let tempPos = { x: startX, y: startY };
-            let tempVal = { n: startVal.n, d: startVal.d };
+            // 「×1」「÷1」判定関数: dx=0 (縦移動) かつ dist=1
+            const isOpOne = (m) => {
+                const dist = Math.abs(m.dx + m.dy);
+                return m.dx === 0 && dist === 1;
+            };
+
+            if (moves.length === 2) {
+                // 2手の場合: x1, /1 を含んではならない
+                if (moves.some(isOpOne)) return false;
+            } else {
+                // 3手以上の場合: x1, /1 が3連続してはならない
+                for (let i = 0; i < moves.length - 2; i++) {
+                    if (isOpOne(moves[i]) && isOpOne(moves[i+1]) && isOpOne(moves[i+2])) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function generateLevel() {
+            const maxVal = isAdvancedMode ? 20 : 10;
             
-            let steps = Math.floor(Math.random() * 3) + 2; 
-            let maxAttempts = 1000;
+            // 試行回数上限
+            for (let attempt = 0; attempt < 1000; attempt++) {
+                let startX = Math.floor(Math.random() * BOARD_SIZE);
+                let startY = Math.floor(Math.random() * BOARD_SIZE);
+                let startNum = Math.floor(Math.random() * (maxVal + 1));
 
-            for(let attempt=0; attempt<maxAttempts; attempt++) {
-                tempPos = { x: startX, y: startY };
-                tempVal = { n: startVal.n, d: startVal.d };
+                let tempPos = { x: startX, y: startY };
+                let tempVal = createFrac(startNum);
+                
+                let steps = getStepCount();
+                let movesHistory = [];
                 let success = true;
 
                 for (let i = 0; i < steps; i++) {
@@ -1940,6 +2606,54 @@
 
                     tempPos.x += move.dx;
                     tempPos.y += move.dy;
+                    movesHistory.push(move);
+                }
+
+                if (success) {
+                    if ((tempPos.x !== startX || tempPos.y !== startY) && 
+                        isInteger(tempVal) && 
+                        tempVal.n >= 0 && tempVal.n <= maxVal &&
+                        !isReachableInOneMove(startX, startY, createFrac(startNum), tempPos.x, tempPos.y, tempVal) &&
+                        isValidPath(movesHistory)) {
+                        
+                        player = { x: startX, y: startY, val: createFrac(startNum) };
+                        goal = { x: tempPos.x, y: tempPos.y, val: tempVal };
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function generateNextGoal() {
+            const maxVal = isAdvancedMode ? 20 : 10;
+            let startX = player.x;
+            let startY = player.y;
+            let startVal = player.val;
+
+            for(let attempt=0; attempt<1000; attempt++) {
+                let tempPos = { x: startX, y: startY };
+                let tempVal = { n: startVal.n, d: startVal.d };
+                
+                let steps = getStepCount();
+                let movesHistory = [];
+                let success = true;
+
+                for (let i = 0; i < steps; i++) {
+                    let validMoves = getValidMoves(tempPos.x, tempPos.y);
+                    if (validMoves.length === 0) { success = false; break; }
+                    
+                    let move = validMoves[Math.floor(Math.random() * validMoves.length)];
+                    let dist = Math.abs(move.dx + move.dy);
+
+                    if (move.dy < 0) tempVal = mul(tempVal, dist);
+                    else if (move.dy > 0) tempVal = div(tempVal, dist);
+                    else if (move.dx > 0) tempVal = add(tempVal, dist);
+                    else if (move.dx < 0) tempVal = sub(tempVal, dist);
+
+                    tempPos.x += move.dx;
+                    tempPos.y += move.dy;
+                    movesHistory.push(move);
                 }
 
                 let conflict = itemsOnBoard.some(it => it.x === tempPos.x && it.y === tempPos.y);
@@ -1947,19 +2661,21 @@
                 if (success && !conflict &&
                    (tempPos.x !== startX || tempPos.y !== startY) && 
                    isInteger(tempVal) && 
-                   tempVal.n >= 0 && tempVal.n <= 10 &&
-                   !isReachableInOneMove(startX, startY, startVal, tempPos.x, tempPos.y, tempVal)) {
+                   tempVal.n >= 0 && tempVal.n <= maxVal &&
+                   !isReachableInOneMove(startX, startY, startVal, tempPos.x, tempPos.y, tempVal) &&
+                   isValidPath(movesHistory)) {
                     
                     goal = { x: tempPos.x, y: tempPos.y, val: tempVal };
                     return true;
                 }
             }
             
+            // フォールバック: どうしても見つからない場合はランダム配置 (従来のロジック)
             let attemptsFallback = 0;
             do {
                 goal.x = Math.floor(Math.random() * BOARD_SIZE);
                 goal.y = Math.floor(Math.random() * BOARD_SIZE);
-                goal.val = createFrac(Math.floor(Math.random() * 11));
+                goal.val = createFrac(Math.floor(Math.random() * (maxVal + 1)));
                 
                 let conflictPlayer = (goal.x === startX && goal.y === startY);
                 let conflictItem = itemsOnBoard.some(it => it.x === goal.x && it.y === goal.y);
@@ -1984,4 +2700,3 @@
     </script>
 </body>
 </html>
-
